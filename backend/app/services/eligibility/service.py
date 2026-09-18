@@ -21,17 +21,15 @@ class EligibilityResult:
     status: str
     reasons: list[str] = field(default_factory=list)
     failed_requirements: list[str] = field(default_factory=list)
+    unknown_requirements: list[str] = field(default_factory=list)
+    passed_requirements: list[str] = field(default_factory=list)
     evidence: list[dict[str, Any]] = field(default_factory=list)
     score: float | None = None
+    confidence: str | None = None
 
 
 class EligibilityEngine:
-    """Production boundary for the notification -> eligibility pipeline.
-
-    The engine deliberately owns orchestration, not recruitment rules. The
-    parser, normalizer and evaluator are injected so the already-tested rule
-    engine can be connected without changing its behavior.
-    """
+    """Production boundary for the notification -> eligibility pipeline."""
 
     def __init__(self, parser: Parser, normalizer: Normalizer, evaluator: Evaluator) -> None:
         self._parser = parser
@@ -43,6 +41,7 @@ class EligibilityEngine:
             return EligibilityResult(
                 status="NEEDS_REVIEW",
                 reasons=["Notification text is empty or unavailable."],
+                confidence="low",
             )
 
         parsed = self._parser.parse(notification_text)
@@ -60,15 +59,36 @@ class EligibilityEngine:
                 status=str(raw_result.get("status", "NEEDS_REVIEW")),
                 reasons=list(raw_result.get("reasons") or []),
                 failed_requirements=list(raw_result.get("failed_requirements") or []),
+                unknown_requirements=list(raw_result.get("unknown_requirements") or []),
+                passed_requirements=list(raw_result.get("passed_requirements") or []),
                 evidence=list(raw_result.get("evidence") or []),
                 score=raw_result.get("score"),
+                confidence=raw_result.get("confidence"),
             )
 
-        status = getattr(raw_result, "status", "NEEDS_REVIEW")
+        failed = list(getattr(raw_result, "failed", []) or [])
+        unknown = list(getattr(raw_result, "unknown", []) or [])
+        passed = list(getattr(raw_result, "passed", []) or [])
+        requirements = list(getattr(raw_result, "requirements", []) or [])
+
+        def reason(item: Any) -> str:
+            return str(getattr(item, "reason", item))
+
+        def evidence(item: Any) -> dict[str, Any]:
+            return {
+                "rule_type": getattr(item, "rule_type", None),
+                "status": getattr(item, "status", None),
+                "evidence": getattr(item, "evidence", None),
+                "confidence": getattr(item, "confidence", None),
+            }
+
         return EligibilityResult(
-            status=str(status),
+            status=str(getattr(raw_result, "status", "NEEDS_REVIEW")),
             reasons=list(getattr(raw_result, "reasons", []) or []),
-            failed_requirements=list(getattr(raw_result, "failed_requirements", []) or []),
-            evidence=list(getattr(raw_result, "evidence", []) or []),
+            failed_requirements=[reason(item) for item in failed],
+            unknown_requirements=[reason(item) for item in unknown],
+            passed_requirements=[str(getattr(item, "rule_type", item)) for item in passed],
+            evidence=[evidence(item) for item in requirements],
             score=getattr(raw_result, "score", None),
+            confidence=getattr(raw_result, "confidence", None),
         )
