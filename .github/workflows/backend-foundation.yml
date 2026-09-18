@@ -64,6 +64,11 @@ jobs:
           DATABASE_URL: postgresql+psycopg://postgres:postgres@localhost:5432/govcareer
         run: python -m pytest tests/test_postgres_models.py -q
 
+      - name: Run persisted eligibility service tests
+        env:
+          DATABASE_URL: postgresql+psycopg://postgres:postgres@localhost:5432/govcareer
+        run: python -m pytest tests/test_job_eligibility_service.py -q
+
       - name: Run Alembic migration
         env:
           DATABASE_URL: postgresql+psycopg://postgres:postgres@localhost:5432/govcareer
