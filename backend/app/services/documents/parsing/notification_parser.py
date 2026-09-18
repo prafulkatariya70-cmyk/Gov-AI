@@ -505,7 +505,7 @@ class NotificationParser:
         patterns = [
             (
                 r"filling up\s+0*(\d+)\s+"
-                r"\([^)]+\)\s+"
+                r"(?:\([^)]+\)\s+)?"
                 r"ex-?Cadre posts"
             ),
             (
