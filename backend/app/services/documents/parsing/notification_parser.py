@@ -1998,3 +1998,109 @@ class NotificationParser:
         )
 
     # ================================================================
+    # PAY LEVEL
+    # ================================================================
+
+    def _parse_pay_level(
+        self,
+        text: str,
+    ) -> ParsedField:
+
+        patterns = [
+            r"\bPay\s+Level[- ]?(\d+)\b",
+            r"\bLevel[- ]?(\d+)\s*\(",
+        ]
+
+        matches = []
+        for pattern in patterns:
+            matches.extend(
+                re.finditer(
+                    pattern,
+                    text,
+                    re.IGNORECASE,
+                )
+            )
+
+        if not matches:
+            return self._field()
+
+        # If a salary/pay-scale is present, prefer the pay-level mention
+        # nearest to it. This avoids confusing a prerequisite such as
+        # "Pay Level-6" with the actual post level "Pay Level-7".
+        salary_match = re.search(
+            r"(?:pay\s*(?:scale|matrix)|rs\.?\s*\d)[^\n]{0,120}",
+            text,
+            re.IGNORECASE,
+        )
+        if salary_match:
+            before_salary = [m for m in matches if m.start() <= salary_match.start()]
+            if before_salary:
+                match = min(
+                    before_salary,
+                    key=lambda m: salary_match.start() - m.end(),
+                )
+            else:
+                match = matches[0]
+        else:
+            # With no salary anchor, retain the final explicit pay-level
+            # mention, which is usually the post's own level after any
+            # service/prerequisite wording.
+            match = max(matches, key=lambda m: m.start())
+
+        return self._field(
+            f"Level-{match.group(1)}",
+            match.group(0),
+            "high",
+        )
+
+    # ================================================================
+    # SALARY
+    # ================================================================
+
+    def _parse_salary(
+        self,
+        text: str,
+    ) -> ParsedField:
+
+        patterns = [
+            (
+                r"Rs\.?\s*"
+                r"([\d,]+\s*-\s*[\d,]+)"
+            ),
+            (
+                r"Rs\.?\s*"
+                r"([\d,]+\s*[â€”â€“-]\s*[\d,]+)"
+            ),
+        ]
+
+        for pattern in patterns:
+
+            match = re.search(
+                pattern,
+                text,
+                re.IGNORECASE,
+            )
+
+            if not match:
+                continue
+
+            value = self._clean(
+                match.group(1)
+            )
+
+            if not value:
+                continue
+
+            value = re.sub(
+                r"\s*[â€”â€“-]\s*",
+                " - ",
+                value,
+            )
+
+            return self._field(
+                f"Rs.{value}",
+                match.group(0),
+                "high",
+            )
+
+        return self._field()
