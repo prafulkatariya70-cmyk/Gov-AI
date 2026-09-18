@@ -96,42 +96,55 @@ user_problem_statement: "Productionize GovCareerAI foundation without breaking t
 backend:
   - task: "PostgreSQL SQLAlchemy ORM foundation"
     implemented: true
-    working: "NA"
+    working: true
     file: "backend/app/models/"
     stuck_count: 0
     priority: "high"
     needs_retesting: true
     status_history:
-      - working: "NA"
+      - working: true
         agent: "main"
-        comment: "Added config, database session, six ORM models, relationships, Alembic initial schema, and deterministic ORM smoke tests. Runtime execution is not available through connected repository tools."
+        comment: "ORM foundation and Alembic schema were previously verified by GitHub Actions."
   - task: "Alembic initial migration"
     implemented: true
-    working: "NA"
+    working: true
     file: "backend/alembic/versions/0001_initial_schema.py"
+    stuck_count: 0
+    priority: "high"
+    needs_retesting: true
+    status_history:
+      - working: true
+        agent: "main"
+        comment: "Initial migration previously completed successfully in GitHub Actions."
+  - task: "Eligibility intelligence integration boundary"
+    implemented: false
+    working: "NA"
+    file: "backend/app/services/eligibility/"
     stuck_count: 0
     priority: "high"
     needs_retesting: true
     status_history:
       - working: "NA"
         agent: "main"
-        comment: "Migration created for users, user_profiles, jobs, job_eligibility, job_sources, and application_trackers; requires local PostgreSQL execution to verify."
+        comment: "Eligibility integration is the active implementation focus. Existing parser/normalizer/evaluator behavior will be preserved and wrapped behind a production service boundary."
+
 frontend: []
+
 metadata:
   created_by: "main_agent"
   version: "1.0"
-  test_sequence: 1
+  test_sequence: 2
   run_ui: false
 
 test_plan:
   current_focus:
-    - "Run ORM smoke tests"
-    - "Run Alembic upgrade head against PostgreSQL"
-    - "Run existing backend tests for regressions"
+    - "Build eligibility service boundary around existing intelligence"
+    - "Add deterministic parser-to-evaluator integration tests"
+    - "Run ORM and Alembic regression gates"
   stuck_tasks: []
   test_all: false
   test_priority: "high_first"
 
 agent_communication:
   - agent: "main"
-    message: "Production foundation is implemented on dev/production-foundation. Verify the ORM imports/tests and PostgreSQL migration before integrating the eligibility engine. No testing-agent tool is available in this session."
+    message: "Test state updated before the eligibility integration cycle. PostgreSQL foundation is protected by the existing CI gate; no testing-agent tool is available in this session."
