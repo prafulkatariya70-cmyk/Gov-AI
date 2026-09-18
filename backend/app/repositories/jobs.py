@@ -1,4 +1,4 @@
-from sqlalchemy import or_, select
+from sqlalchemy import func, or_, select
 from sqlalchemy.orm import Session
 
 from app.models.job import Job
@@ -43,12 +43,12 @@ class JobRepository:
             filters.append(Job.status == status)
 
         base = select(Job)
-        count_query = select(Job.id)
+        count_query = select(func.count()).select_from(Job)
         if filters:
             base = base.where(*filters)
             count_query = count_query.where(*filters)
 
-        total = len(self.db.execute(count_query).all())
+        total = self.db.execute(count_query).scalar_one()
         offset = (page - 1) * page_size
         jobs = self.db.execute(
             base.order_by(Job.created_at.desc(), Job.id).offset(offset).limit(page_size)
