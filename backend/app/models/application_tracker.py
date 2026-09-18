@@ -1,7 +1,7 @@
 import uuid
 from datetime import date, datetime
 
-from sqlalchemy import Date, DateTime, ForeignKey, String, Text
+from sqlalchemy import Date, DateTime, ForeignKey, String, Text, UniqueConstraint
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
 from app.core.database import Base
@@ -9,6 +9,10 @@ from app.core.database import Base
 
 class ApplicationTracker(Base):
     __tablename__ = "application_trackers"
+
+    __table_args__ = (
+        UniqueConstraint("user_id", "job_id", name="uq_application_tracker_user_job"),
+    )
 
     id: Mapped[uuid.UUID] = mapped_column(primary_key=True, default=uuid.uuid4)
     user_id: Mapped[uuid.UUID] = mapped_column(ForeignKey("users.id", ondelete="CASCADE"), index=True)
