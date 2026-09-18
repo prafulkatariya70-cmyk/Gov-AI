@@ -44,6 +44,11 @@ jobs:
           python -m pip install --upgrade pip
           pip install "sqlalchemy>=2.0.36" "psycopg[binary]>=3.2.3" "alembic>=1.14.0" "pydantic>=2.6.4" "pydantic-settings>=2.6.1" "pytest>=8.0.0" "pytest-xdist>=3.6.0"
 
+      - name: Run eligibility engine boundary tests
+        env:
+          DATABASE_URL: postgresql+psycopg://postgres:postgres@localhost:5432/govcareer
+        run: python -m pytest tests/test_eligibility_engine.py -q
+
       - name: Run ORM smoke tests
         env:
           DATABASE_URL: postgresql+psycopg://postgres:postgres@localhost:5432/govcareer
