@@ -126,11 +126,7 @@ class EligibilityEvaluator:
         )
 
         # ---------------------------------------------
-        # IMPORTANT:
-        #
-        # Determine final eligibility from the
-        # logical rule tree rather than blindly
-        # flattening every child result.
+        # EFFECTIVE RESULTS
         # ---------------------------------------------
 
         failed = self._collect_effective_results(
@@ -152,7 +148,16 @@ class EligibilityEvaluator:
         # FINAL STATUS
         # ---------------------------------------------
 
-        if failed:
+        # No evaluable requirements must never be
+        # interpreted as eligibility.
+        #
+        # Missing/empty eligibility rules require
+        # manual review instead.
+        if not results:
+
+            status = "NEEDS_REVIEW"
+
+        elif failed:
 
             status = "NOT_ELIGIBLE"
 
@@ -164,10 +169,18 @@ class EligibilityEvaluator:
 
             status = "ELIGIBLE"
 
-        confidence = self._calculate_confidence(
-            failed,
-            unknown,
-        )
+        # Empty rules cannot provide high-confidence
+        # eligibility information.
+        if not results:
+
+            confidence = "medium"
+
+        else:
+
+            confidence = self._calculate_confidence(
+                failed,
+                unknown,
+            )
 
         reasons = self._build_reasons(
             failed,
@@ -359,6 +372,7 @@ class EligibilityEvaluator:
             else:
 
                 if result.status == status:
+
                     collected.append(result)
 
         return collected
@@ -389,6 +403,7 @@ class EligibilityEvaluator:
             if group.status == "PASS":
 
                 if status == "PASS":
+
                     collected.append(group)
 
                 return
@@ -396,6 +411,7 @@ class EligibilityEvaluator:
             if group.status == "FAIL":
 
                 if status == "FAIL":
+
                     collected.append(group)
 
                 return
@@ -403,6 +419,7 @@ class EligibilityEvaluator:
             if group.status == "UNKNOWN":
 
                 if status == "UNKNOWN":
+
                     collected.append(group)
 
                 return
@@ -438,6 +455,7 @@ class EligibilityEvaluator:
         # ---------------------------------------------
 
         if group.status == status:
+
             collected.append(group)
 
     # =================================================
@@ -730,7 +748,8 @@ class EligibilityEvaluator:
 
         if not enough_years:
 
-            return RequirementResult(                rule_type=rule.rule_type,
+            return RequirementResult(
+                rule_type=rule.rule_type,
                 status="FAIL",
                 required=required,
                 actual={
@@ -877,6 +896,7 @@ class EligibilityEvaluator:
             )
 
         try:
+
             numeric_actual = float(actual)
 
         except (
@@ -957,9 +977,11 @@ class EligibilityEvaluator:
     ) -> str:
 
         if failed:
+
             return "high"
 
         if unknown:
+
             return "medium"
 
         return "high"
@@ -975,6 +997,7 @@ class EligibilityEvaluator:
         for result in failed:
 
             if result.reason:
+
                 reasons.append(
                     result.reason
                 )
@@ -982,6 +1005,7 @@ class EligibilityEvaluator:
         for result in unknown:
 
             if result.reason:
+
                 reasons.append(
                     result.reason
                 )
