@@ -55,7 +55,6 @@ class NotificationParser:
     - Separates education level from degree.
     - Separates general experience from government-service conditions.
     - Avoids treating generic words such as "Degree" as a specific degree.
-    - Avoids treating ambiguous "MS" occurrences as a degree.
     - Extracts qualification text when possible.
     - Extracts application dates when identifiable.
     """
@@ -133,11 +132,7 @@ class NotificationParser:
         for old, new in replacements.items():
             text = text.replace(old, new)
 
-        text = re.sub(
-            r"\r\n?",
-            "\n",
-            text,
-        )
+        text = re.sub(r"\r\n?", "\n", text)
 
         text = re.sub(
             r"[ \t]+",
@@ -192,6 +187,7 @@ class NotificationParser:
         patterns: list[str],
         flags: int = re.IGNORECASE,
     ):
+
         for pattern in patterns:
             match = re.search(
                 pattern,
@@ -248,13 +244,10 @@ class NotificationParser:
             return None
 
         for group in match.groups():
-
             if not group:
                 continue
 
-            parsed = self._parse_date(
-                group
-            )
+            parsed = self._parse_date(group)
 
             if parsed:
                 return parsed
@@ -272,26 +265,30 @@ class NotificationParser:
 
         patterns = [
             (
+                r"applications?\s+(?:are\s+)?invited\s+from\s+"
+                r"(\d{1,2}[./-]\d{1,2}[./-]\d{2,4})"
+            ),
+            (
                 r"(?:online\s+)?applications?\s+"
                 r"(?:will\s+)?(?:be\s+)?"
                 r"(?:received|accepted)"
                 r".{0,100}?"
                 r"(?:from|starting\s+from|start(?:s|ing)?\s+on)"
                 r"\s*"
-                r"(\d{1,2}[/-]\d{1,2}[/-]\d{2,4})"
+                r"(\d{1,2}[./-]\d{1,2}[./-]\d{2,4})"
             ),
             (
                 r"opening\s+date\s*[:\-]?\s*"
-                r"(\d{1,2}[/-]\d{1,2}[/-]\d{2,4})"
+                r"(\d{1,2}[./-]\d{1,2}[./-]\d{2,4})"
             ),
             (
                 r"application\s+start(?:s|ing)?\s+date"
                 r"\s*[:\-]?\s*"
-                r"(\d{1,2}[/-]\d{1,2}[/-]\d{2,4})"
+                r"(\d{1,2}[./-]\d{1,2}[./-]\d{2,4})"
             ),
             (
                 r"start\s+date\s*[:\-]?\s*"
-                r"(\d{1,2}[/-]\d{1,2}[/-]\d{2,4})"
+                r"(\d{1,2}[./-]\d{1,2}[./-]\d{2,4})"
             ),
         ]
 
@@ -306,9 +303,7 @@ class NotificationParser:
             if not match:
                 continue
 
-            parsed = self._extract_date_from_match(
-                match
-            )
+            parsed = self._extract_date_from_match(match)
 
             if parsed:
                 return self._field(
@@ -330,28 +325,46 @@ class NotificationParser:
 
         patterns = [
             (
+                r"applications?\s+(?:are\s+)?invited\s+from\s+"
+                r"\d{1,2}[./-]\d{1,2}[./-]\d{2,4}"
+                r".{0,30}?(?:to|till|until)\s*"
+                r"(\d{1,2}[./-]\d{1,2}[./-]\d{2,4})"
+            ),
+            (
+                r"(?:online\s+)?applications?\s+"
+                r"(?:will\s+)?(?:be\s+)?"
+                r"(?:received|accepted)"
+                r".{0,100}?"
+                r"(?:from|starting\s+from|start(?:s|ing)?\s+on)"
+                r"\s*\d{1,2}[./-]\d{1,2}[./-]\d{2,4}"
+                r".{0,30}?"
+                r"(?:to|till|until)"
+                r"\s*"
+                r"(\d{1,2}[./-]\d{1,2}[./-]\d{2,4})"
+            ),
+            (
                 r"last\s+date\s+for\s+"
                 r"(?:receipt\s+of\s+)?"
                 r"(?:applications?|application)"
                 r".{0,100}?"
-                r"(\d{1,2}[/-]\d{1,2}[/-]\d{2,4})"
+                r"(\d{1,2}[./-]\d{1,2}[./-]\d{2,4})"
             ),
             (
                 r"last\s+date\s*[:\-]?\s*"
-                r"(\d{1,2}[/-]\d{1,2}[/-]\d{2,4})"
+                r"(\d{1,2}[./-]\d{1,2}[./-]\d{2,4})"
             ),
             (
                 r"closing\s+date\s*[:\-]?\s*"
-                r"(\d{1,2}[/-]\d{1,2}[/-]\d{2,4})"
+                r"(\d{1,2}[./-]\d{1,2}[./-]\d{2,4})"
             ),
             (
                 r"application\s+end(?:s|ing)?\s+date"
                 r"\s*[:\-]?\s*"
-                r"(\d{1,2}[/-]\d{1,2}[/-]\d{2,4})"
+                r"(\d{1,2}[./-]\d{1,2}[./-]\d{2,4})"
             ),
             (
                 r"end\s+date\s*[:\-]?\s*"
-                r"(\d{1,2}[/-]\d{1,2}[/-]\d{2,4})"
+                r"(\d{1,2}[./-]\d{1,2}[./-]\d{2,4})"
             ),
         ]
 
@@ -366,9 +379,7 @@ class NotificationParser:
             if not match:
                 continue
 
-            parsed = self._extract_date_from_match(
-                match
-            )
+            parsed = self._extract_date_from_match(match)
 
             if parsed:
                 return self._field(
@@ -390,6 +401,7 @@ class NotificationParser:
 
         patterns = [
             r"Staff Selection Commission\s*\(HQ\)",
+            r"Staff Selection Commission",
             r"Union Public Service Commission",
             r"Railway Recruitment Board",
             r"Institute of Banking Personnel Selection",
@@ -443,6 +455,10 @@ class NotificationParser:
                 r"posts\s+of\s+"
                 r"([A-Za-z][A-Za-z0-9/&().,\- ]+?)"
                 r"\s+on\s+(?:deputation|contract)"
+            ),
+            (
+                r"(?:recruitment\s+to\s+the\s+)?post\s+of\s+"
+                r"([^\n.]+)"
             ),
         ]
 
@@ -503,6 +519,10 @@ class NotificationParser:
                 r"\([^)]+\)\s+"
                 r"ex-?Cadre posts"
             ),
+            (
+                r"applications?\s+are\s+invited\s+for\s+"
+                r"0*(\d+)\s+posts?"
+            ),
         ]
 
         for pattern in patterns:
@@ -520,6 +540,19 @@ class NotificationParser:
                     match.group(0),
                     "high",
                 )
+
+        match = re.search(
+            r"(?:total\s+vacancies?|total\s+number\s+of\s+vacancies?)\s*[:\-]?\s*0*(\d+)\b",
+            text,
+            re.IGNORECASE,
+        )
+
+        if match:
+            return self._field(
+                int(match.group(1)),
+                match.group(0),
+                "high",
+            )
 
         match = re.search(
             r"No\.\s+of\s+posts.{0,200}?\b0*(\d+)\b",
@@ -602,6 +635,10 @@ class NotificationParser:
 
         patterns = [
             (
+                r"age\s+limit\s*[:\-]?\s*"
+                r"(\d{1,2})\s+to\s+\d{1,2}\s*years?"
+            ),
+            (
                 r"minimum age(?: limit)?\s*"
                 r"(?:of|is|:)?\s*"
                 r"(\d{1,2})\s*years?"
@@ -648,6 +685,10 @@ class NotificationParser:
     ) -> ParsedField:
 
         patterns = [
+            (
+                r"age\s+limit\s*[:\-]?\s*"
+                r"\d{1,2}\s+to\s+(\d{1,2})\s*years?"
+            ),
             (
                 r"maximum age limit.*?"
                 r"not exceed(?:ing)?\s*"
@@ -729,12 +770,14 @@ class NotificationParser:
                 r"\s*[:\-]?\s*"
                 r"(.{0,1500})"
             ),
+
             (
                 r"(?:possessing\s+the\s+following\s+"
                 r"qualifications\s+and\s+experience)"
                 r"\s*[:\-]?\s*"
                 r"(.{0,1500})"
             ),
+
             (
                 r"\bqualification\s*[:\-]\s*"
                 r"(.{0,1500})"
@@ -750,12 +793,11 @@ class NotificationParser:
             )
 
             if match:
-
                 qualification_text = match.group(1)
 
-                qualification_text = (
-                    qualification_text[:1500]
-                )
+                # Prevent unrelated parts of the notification
+                # from influencing the education classification.
+                qualification_text = qualification_text[:1500]
 
                 break
 
@@ -871,6 +913,19 @@ class NotificationParser:
 
         # ============================================================
         # GRADUATION
+        #
+        # IMPORTANT:
+        #
+        # "Degree of a recognised University"
+        # "Degree from a recognised University"
+        #
+        # means graduation-level qualification.
+        #
+        # But we DO NOT return:
+        #
+        #     degree = "Degree"
+        #
+        # That is handled separately by _parse_degree().
         # ============================================================
 
         graduation_patterns = [
@@ -891,25 +946,17 @@ class NotificationParser:
             r"\bdegree\s+of\s+any\s+recognized\s+university\b",
             r"\bdegree\s+from\s+any\s+recognized\s+university\b",
 
-            (
-                r"\bdegree\s+of\s+a\s+recognised\s+university"
-                r"\s+or\s+equivalent\b"
-            ),
+            r"\bdegree\s+of\s+a\s+recognised\s+university"
+            r"\s+or\s+equivalent\b",
 
-            (
-                r"\bdegree\s+of\s+a\s+recognized\s+university"
-                r"\s+or\s+equivalent\b"
-            ),
+            r"\bdegree\s+of\s+a\s+recognized\s+university"
+            r"\s+or\s+equivalent\b",
 
-            (
-                r"\bdegree\s+from\s+a\s+recognised\s+university"
-                r"\s+or\s+equivalent\b"
-            ),
+            r"\bdegree\s+from\s+a\s+recognised\s+university"
+            r"\s+or\s+equivalent\b",
 
-            (
-                r"\bdegree\s+from\s+a\s+recognized\s+university"
-                r"\s+or\s+equivalent\b"
-            ),
+            r"\bdegree\s+from\s+a\s+recognized\s+university"
+            r"\s+or\s+equivalent\b",
         ]
 
         match = find_in_qualification(
@@ -974,6 +1021,9 @@ class NotificationParser:
 
         # ============================================================
         # FALLBACK: WHOLE NOTIFICATION
+        #
+        # Only used if no useful qualification section was found.
+        # Higher education is checked first.
         # ============================================================
 
         match = self._first_match(
@@ -1000,3 +1050,951 @@ class NotificationParser:
                 match.group(0),
                 "high",
             )
+
+        match = self._first_match(
+            text,
+            postgraduate_patterns,
+        )
+
+        if match:
+
+            return self._field(
+                "POST_GRADUATION",
+                match.group(0),
+                "high",
+            )
+
+        match = self._first_match(
+            text,
+            phd_patterns,
+        )
+
+        if match:
+
+            return self._field(
+                "PHD",
+                match.group(0),
+                "high",
+            )
+
+        match = self._first_match(
+            text,
+            graduation_patterns,
+        )
+
+        if match:
+
+            return self._field(
+                "GRADUATION",
+                match.group(0),
+                "high",
+            )
+
+        match = self._first_match(
+            text,
+            twelfth_patterns,
+        )
+
+        if match:
+
+            return self._field(
+                "12TH",
+                match.group(0),
+                "high",
+            )
+
+        match = self._first_match(
+            text,
+            tenth_patterns,
+        )
+
+        if match:
+
+            return self._field(
+                "10TH",
+                match.group(0),
+                "high",
+            )
+
+        return self._field()
+
+    # ================================================================
+    # DEGREE
+    # ================================================================
+
+    def _parse_degree(
+        self,
+        text: str,
+    ) -> ParsedField:
+
+        """
+        Extract an actual named degree.
+
+        IMPORTANT:
+
+        These must NOT return degree="Degree":
+
+            Degree of a recognised University
+            Degree from a recognised University
+            Educational Degree
+
+        Generic "Degree" is not a specific degree.
+        """
+
+        # ============================================================
+        # SPECIFIC ABBREVIATIONS
+        # ============================================================
+
+        abbreviation_patterns = [
+            r"\bB\.E\.?\b",
+            r"\bB\.Tech\.?\b",
+            r"\bB\.Sc\.?\b",
+            r"\bB\.Com\.?\b",
+            r"\bB\.A\.?\b",
+            r"\bB\.CA\.?\b",
+            r"\bB\.BA\.?\b",
+            r"\bB\.Pharm\.?\b",
+            r"\bLL\.B\.?\b",
+            r"\bB\.Ed\.?\b",
+            r"\bB\.Lib\.?\b",
+
+            r"\bM\.E\.?\b",
+            r"\bM\.Tech\.?\b",
+            r"\bM\.Sc\.?\b",
+            r"\bM\.Com\.?\b",
+            r"\bM\.A\.?\b",
+            r"\bM\.CA\.?\b",
+            r"\bMBA\b",
+            r"\bMCA\b",
+            r"\bLL\.M\.?\b",
+            r"\bM\.Ed\.?\b",
+            r"\bM\.Lib\.?\b",
+
+            r"\bBDS\b",
+            r"\bMBBS\b",
+            r"\bMD\b",
+            r"\bMDS\b",
+            r"\bPh\.D\.?\b",
+        ]
+
+        for pattern in abbreviation_patterns:
+
+            match = re.search(
+                pattern,
+                text,
+                re.IGNORECASE,
+            )
+
+            if not match:
+                continue
+
+            value = self._clean(
+                match.group(0)
+            )
+
+            if not value:
+                continue
+
+            return self._field(
+                value,
+                match.group(0),
+                "high",
+            )
+
+        # ============================================================
+        # M.S. / MS SPECIAL HANDLING
+        #
+        # Plain "Ms" is commonly an honorific (Ms. Name), so it must
+        # never be accepted from the entire notification as a degree.
+        # A genuine academic MS is accepted only from qualification
+        # text and only when academic context is present nearby.
+        # ============================================================
+
+        qualification_field = self._parse_qualification_text(text)
+        qualification_text = (
+            str(qualification_field.value)
+            if qualification_field.value
+            else ""
+        )
+
+        if qualification_text:
+
+            ms_patterns = [
+                r"\bM\.S\.?\b",
+                r"\bMS\b",
+            ]
+
+            for pattern in ms_patterns:
+
+                for match in re.finditer(
+                    pattern,
+                    qualification_text,
+                    re.IGNORECASE,
+                ):
+
+                    start = match.start()
+                    end = match.end()
+
+                    nearby = qualification_text[
+                        max(0, start - 100):
+                        min(len(qualification_text), end + 100)
+                    ]
+
+                    if not re.search(
+                        r"\b(?:degree|master|science|engineering|"
+                        r"technology|qualification|university|college)\b",
+                        nearby,
+                        re.IGNORECASE,
+                    ):
+                        continue
+
+                    value = self._clean(match.group(0))
+
+                    if value.lower() == "ms":
+                        value = "MS"
+
+                    if value:
+                        return self._field(
+                            value,
+                            match.group(0),
+                            "high",
+                        )
+
+        # ============================================================
+        # FULL DEGREE NAMES
+        # ============================================================
+
+        full_name_patterns = [
+            (
+                r"\bBachelor(?:'s)?\s+of\s+"
+                r"(?:Engineering|Technology|Science|Commerce|"
+                r"Arts|Computer\s+Applications|Business\s+Administration|"
+                r"Pharmacy|Education|Law|Library\s+Science)"
+            ),
+            (
+                r"\bMaster(?:'s)?\s+of\s+"
+                r"(?:Engineering|Technology|Science|Commerce|"
+                r"Arts|Computer\s+Applications|Business\s+Administration|"
+                r"Education|Law|Library\s+Science)"
+            ),
+        ]
+
+        for pattern in full_name_patterns:
+
+            match = re.search(
+                pattern,
+                text,
+                re.IGNORECASE,
+            )
+
+            if match:
+
+                value = self._clean(
+                    match.group(0)
+                )
+
+                if value:
+
+                    return self._field(
+                        value,
+                        match.group(0),
+                        "high",
+                    )
+
+        # ============================================================
+        # DEGREE IN SUBJECT
+        #
+        # Example:
+        #
+        # Degree in Civil Engineering
+        #
+        # Return:
+        #
+        # Civil Engineering
+        #
+        # NOT:
+        #
+        # Degree
+        # ============================================================
+
+        degree_in_patterns = [
+            (
+                r"\bdegree\s+in\s+"
+                r"([A-Za-z][A-Za-z &/,().\-]{2,100}?)"
+                r"(?=\s+(?:from|of|with|and|or|recognized|recognised|"
+                r"equivalent|having|possessing)\b|[.;:\n]|$)"
+            ),
+            (
+                r"\bdegree\s+in\s+"
+                r"([A-Za-z][A-Za-z &/,().\-]{2,100})"
+            ),
+        ]
+
+        for pattern in degree_in_patterns:
+
+            match = re.search(
+                pattern,
+                text,
+                re.IGNORECASE,
+            )
+
+            if not match:
+                continue
+
+            subject = self._clean(
+                match.group(1)
+            )
+
+            if not subject:
+                continue
+
+            subject = re.sub(
+                r"\s+",
+                " ",
+                subject,
+            )
+
+            return self._field(
+                subject,
+                match.group(0),
+                "medium",
+            )
+
+        # ============================================================
+        # NO GENERIC DEGREE FALLBACK
+        # ============================================================
+
+        return self._field()
+
+    # ================================================================
+    # BRANCH
+    # ================================================================
+
+    def _parse_branch(
+        self,
+        text: str,
+    ) -> ParsedField:
+
+        patterns = [
+            (
+                r"\bbranch\s*[:\-]\s*"
+                r"([A-Za-z][A-Za-z &/,.\-]{2,80})"
+            ),
+            (
+                r"\bdiscipline\s*[:\-]\s*"
+                r"([A-Za-z][A-Za-z &/,.\-]{2,80})"
+            ),
+            (
+                r"\bspecialization\s*[:\-]\s*"
+                r"([A-Za-z][A-Za-z &/,.\-]{2,80})"
+            ),
+        ]
+
+        for pattern in patterns:
+
+            match = re.search(
+                pattern,
+                text,
+                re.IGNORECASE,
+            )
+
+            if match:
+
+                value = self._clean(
+                    match.group(1)
+                )
+
+                if value:
+
+                    return self._field(
+                        value,
+                        match.group(0),
+                        "medium",
+                    )
+
+        return self._field()
+
+    # ================================================================
+    # MINIMUM EXPERIENCE
+    # ================================================================
+
+    def _parse_minimum_experience(
+        self,
+        text: str,
+    ) -> ParsedField:
+
+        number_words = {
+            "one": 1,
+            "two": 2,
+            "three": 3,
+            "four": 4,
+            "five": 5,
+            "six": 6,
+            "seven": 7,
+            "eight": 8,
+            "nine": 9,
+            "ten": 10,
+            "eleven": 11,
+            "twelve": 12,
+            "thirteen": 13,
+            "fourteen": 14,
+            "fifteen": 15,
+            "sixteen": 16,
+            "seventeen": 17,
+            "eighteen": 18,
+            "nineteen": 19,
+            "twenty": 20,
+        }
+
+        numeric_patterns = [
+            (
+                r"\b(\d+)\s+years?'?\s+"
+                r"of\s+experience\b"
+            ),
+            (
+                r"\b(\d+)\s+years?'?\s+"
+                r"experience\b"
+            ),
+        ]
+
+        for pattern in numeric_patterns:
+
+            match = re.search(
+                pattern,
+                text,
+                re.IGNORECASE,
+            )
+
+            if not match:
+                continue
+
+            value = int(
+                match.group(1)
+            )
+
+            return self._field(
+                value,
+                match.group(0),
+                "high",
+            )
+
+        word_pattern = (
+            r"\b("
+            + "|".join(number_words.keys())
+            + r")\s+years?'?\s+"
+            r"(?:of\s+)?experience\b"
+        )
+
+        match = re.search(
+            word_pattern,
+            text,
+            re.IGNORECASE,
+        )
+
+        if match:
+
+            word = match.group(1).lower()
+            value = number_words[word]
+
+            return self._field(
+                value,
+                match.group(0),
+                "high",
+            )
+
+        return self._field()
+
+    # ================================================================
+    # GOVERNMENT SERVICE
+    # ================================================================
+
+    def _parse_requires_government_service(
+        self,
+        text: str,
+    ) -> ParsedField:
+
+        patterns = [
+            r"Officers under the Central Government",
+            r"Officers under the State Government",
+            r"Central Government",
+            r"State Government",
+            r"Government servants",
+            r"Government employees",
+            r"Govt\.?\s+employees",
+            r"Central/State Governments",
+            r"experience\s+in\s+government\s+service",
+        ]
+
+        for pattern in patterns:
+
+            match = re.search(
+                pattern,
+                text,
+                re.IGNORECASE,
+            )
+
+            if match:
+
+                return self._field(
+                    True,
+                    match.group(0),
+                    "high",
+                )
+
+        return self._field(
+            False,
+            None,
+            "medium",
+        )
+
+    # ================================================================
+    # SERVICE REQUIREMENT
+    # ================================================================
+
+    def _parse_service_requirement(
+        self,
+        text: str,
+    ) -> ParsedField:
+
+        requirements: list[str] = []
+
+        patterns_a = [
+            (
+                r"holding\s+analogous\s+posts\s+"
+                r"on\s+regular\s+basis\s+"
+                r"in\s+the\s+parent\s+cadre\s+or\s+Department"
+            ),
+            (
+                r"holding\s+analogous\s+posts\s+"
+                r"on\s+regular\s+basis\s+"
+                r"in\s+the\s+parent\s+cadre/department"
+            ),
+        ]
+
+        for pattern in patterns_a:
+
+            match = re.search(
+                pattern,
+                text,
+                re.IGNORECASE,
+            )
+
+            if match:
+
+                value = self._clean(
+                    match.group(0)
+                )
+
+                if (
+                    value
+                    and value not in requirements
+                ):
+                    requirements.append(value)
+
+                break
+
+        patterns_b = [
+            (
+                r"With\s+\d+\s+years?'?\s+"
+                r"service\s+in\s+the\s+grade"
+                r".{0,350}?"
+                r"parent\s+cadre/department"
+            ),
+            (
+                r"With\s+\d+\s+years?'?\s+"
+                r"service\s+in\s+the\s+grade"
+                r".{0,350}?"
+                r"parent\s+cadre\s+or\s+Department"
+            ),
+        ]
+
+        for pattern in patterns_b:
+
+            match = re.search(
+                pattern,
+                text,
+                re.IGNORECASE | re.DOTALL,
+            )
+
+            if match:
+
+                value = self._clean(
+                    match.group(0)
+                )
+
+                if (
+                    value
+                    and value not in requirements
+                ):
+                    requirements.append(value)
+
+                break
+
+        if not requirements:
+            return self._field()
+
+        value = " OR ".join(
+            requirements
+        )
+
+        return self._field(
+            value,
+            value,
+            "high",
+        )
+
+    # ================================================================
+    # QUALIFICATION TEXT
+    # ================================================================
+
+    def _parse_qualification_text(
+        self,
+        text: str,
+    ) -> ParsedField:
+
+        start_patterns = [
+            (
+                r"\bb\)\s*"
+                r"Possessing\s+the\s+following\s+"
+                r"qualifications\s+and\s+experience\s*"
+                r":?\s*-?"
+            ),
+            (
+                r"\bPossessing\s+the\s+following\s+"
+                r"qualifications\s+and\s+experience\s*"
+                r":?\s*-?"
+            ),
+            (
+                r"\bEssential\s+Qualifications?\s*[:\-]?"
+            ),
+            (
+                r"\bESSENTIAL\s+QUALIFICATIONS?\s*[:\-]?"
+            ),
+        ]
+
+        start_match = None
+
+        for pattern in start_patterns:
+
+            match = re.search(
+                pattern,
+                text,
+                re.IGNORECASE,
+            )
+
+            if match:
+                start_match = match
+                break
+
+        if not start_match:
+            return self._field()
+
+        start = start_match.start()
+
+        remaining = text[start:]
+
+        end_patterns = [
+            r"\n\s*Note-?\s*1\b",
+            r"\n\s*Note\s*1\b",
+            r"\n\s*Note-?\s*2\b",
+            r"\n\s*Note\s*2\b",
+            r"\n\s*DESIRABLE\s+QUALIFICATIONS?\b",
+            r"\n\s*ii\s+Last date for receipt",
+            r"\n\s*Last date for receipt",
+            r"\n\s*ANNEXURE-II\b",
+            r"\n\s*AGE\s+LIMIT\b",
+            r"\n\s*PAY\s+LEVEL\b",
+        ]
+
+        end_positions: list[int] = []
+
+        for pattern in end_patterns:
+
+            match = re.search(
+                pattern,
+                remaining,
+                re.IGNORECASE,
+            )
+
+            if match:
+                end_positions.append(
+                    match.start()
+                )
+
+        if end_positions:
+
+            end = min(end_positions)
+            block = remaining[:end]
+
+        else:
+
+            block = remaining[:2500]
+
+        block = self._clean(block)
+
+        if not block:
+            return self._field()
+
+        block = re.sub(
+            r"^b\)\s*",
+            "",
+            block,
+            flags=re.IGNORECASE,
+        )
+
+        block = re.sub(
+            r"^ESSENTIAL\s+QUALIFICATIONS?\s*[:\-]?\s*",
+            "",
+            block,
+            flags=re.IGNORECASE,
+        )
+
+        block = self._clean(block)
+
+        if not block:
+            return self._field()
+
+        return self._field(
+            block,
+            block,
+            "high",
+        )
+
+    # ================================================================
+    # EXPERIENCE REQUIREMENT
+    # ================================================================
+
+    def _parse_experience_requirement(
+        self,
+        text: str,
+    ) -> ParsedField:
+
+        patterns = [
+            (
+                r"\b(\d+)\s+years?'?\s+"
+                r"experience\s+in\s+"
+                r"Cash,\s*Accounts\s+and\s+Budget\s+work"
+            ),
+            (
+                r"\b(\d+)\s+years?'?\s+"
+                r"of\s+experience\s+in\s+"
+                r"Cash,\s*Accounts\s+and\s+Budget\s+work"
+            ),
+            (
+                r"\bFive\s+years?'?\s+"
+                r"experience\s+in\s+"
+                r"Cash,\s*Accounts\s+and\s+Budget\s+work"
+            ),
+        ]
+
+        for pattern in patterns:
+
+            match = re.search(
+                pattern,
+                text,
+                re.IGNORECASE,
+            )
+
+            if not match:
+                continue
+
+            value = self._clean(
+                match.group(0)
+            )
+
+            if value:
+
+                value = re.sub(
+                    r"[.;,:]+$",
+                    "",
+                    value,
+                )
+
+                return self._field(
+                    value,
+                    match.group(0),
+                    "high",
+                )
+
+        return self._field()
+
+    # ================================================================
+    # DEPARTMENT REQUIREMENT
+    # ================================================================
+
+    def _parse_department_requirement(
+        self,
+        text: str,
+    ) -> ParsedField:
+
+        patterns = [
+            (
+                r"holding\s+analogous\s+posts\s+"
+                r"on\s+regular\s+basis\s+"
+                r"in\s+the\s+parent\s+cadre\s+or\s+Department"
+            ),
+            (
+                r"holding\s+analogous\s+posts\s+"
+                r"on\s+regular\s+basis\s+"
+                r"in\s+the\s+parent\s+cadre/department"
+            ),
+        ]
+
+        for pattern in patterns:
+
+            match = re.search(
+                pattern,
+                text,
+                re.IGNORECASE,
+            )
+
+            if match:
+
+                value = self._clean(
+                    match.group(0)
+                )
+
+                if value:
+
+                    return self._field(
+                        value,
+                        match.group(0),
+                        "high",
+                    )
+
+        return self._field()
+
+    # ================================================================
+    # SPECIAL REQUIREMENTS
+    # ================================================================
+
+    def _parse_special_requirements(
+        self,
+        text: str,
+    ) -> ParsedField:
+
+        requirements: list[str] = []
+
+        checks = [
+            (
+                r"\bcadre\s+clearance\b",
+                "Cadre clearance required",
+            ),
+            (
+                r"\bvigilance\s+clearance\b",
+                "Vigilance clearance required",
+            ),
+            (
+                r"\bcopies\s+of\s+APARs\b",
+                "Copies of APARs required",
+            ),
+            (
+                r"\bCR\s+Dossier\b"
+                r"|\bCR\s+dossier\b"
+                r"|\bACRs?\s+for\s+the\s+last\s+5\s+years\b",
+                "ACRs/CR dossier documentation required",
+            ),
+            (
+                r"Certificate\s+from\s+the\s+Employer"
+                r"|Certificate\s+of\s+Employer",
+                "Certificate from Employer required",
+            ),
+            (
+                r"\bthrough\s+proper\s+channel\b",
+                "Application must be forwarded through proper channel",
+            ),
+            (
+                r"\bconditional\s+forwarding\b",
+                "Conditional forwarding from employer may lead to rejection",
+            ),
+        ]
+
+        for pattern, label in checks:
+
+            if re.search(
+                pattern,
+                text,
+                re.IGNORECASE,
+            ):
+
+                if label not in requirements:
+                    requirements.append(label)
+
+        duration_patterns = [
+            (
+                r"appointment\s+will\s+be\s+made\s+"
+                r"on\s+deputation\s+basis\s+initially\s+"
+                r"for\s+a\s+period\s+of\s+(\d+)\s+years?"
+            ),
+            (
+                r"deputation\s+basis\s+initially\s+"
+                r"for\s+a\s+period\s+of\s+(\d+)\s+years?"
+            ),
+        ]
+
+        for pattern in duration_patterns:
+
+            match = re.search(
+                pattern,
+                text,
+                re.IGNORECASE,
+            )
+
+            if match:
+
+                label = (
+                    f"Initial deputation period: "
+                    f"{match.group(1)} years"
+                )
+
+                if label not in requirements:
+                    requirements.append(label)
+
+                break
+
+        if re.search(
+            r"within\s+2\s+months\s+from\s+the\s+date\s+"
+            r"of\s+publication\s+of\s+the\s+advertisement",
+            text,
+            re.IGNORECASE,
+        ):
+
+            label = (
+                "Application deadline: within 2 months "
+                "from publication in Employment News"
+            )
+
+            if label not in requirements:
+                requirements.append(label)
+
+        maximum_age_match = re.search(
+            r"maximum\s+age\s+limit.*?"
+            r"not\s+exceed.*?(\d{1,3})\s+years",
+            text,
+            re.IGNORECASE | re.DOTALL,
+        )
+
+        if maximum_age_match:
+
+            label = (
+                f"Maximum age: "
+                f"{maximum_age_match.group(1)} years"
+            )
+
+            if label not in requirements:
+                requirements.append(label)
+
+        if not requirements:
+            return self._field()
+
+        value = "; ".join(
+            requirements
+        )
+
+        return self._field(
+            value,
+            value,
+            "high",
+        )
+
+    # ================================================================
