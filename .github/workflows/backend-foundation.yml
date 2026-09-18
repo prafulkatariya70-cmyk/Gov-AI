@@ -49,6 +49,16 @@ jobs:
           DATABASE_URL: postgresql+psycopg://postgres:postgres@localhost:5432/govcareer
         run: python -m pytest tests/test_eligibility_engine.py -q
 
+      - name: Run notification parser regression tests
+        env:
+          DATABASE_URL: postgresql+psycopg://postgres:postgres@localhost:5432/govcareer
+        run: python -m pytest tests/test_notification_parser.py -q
+
+      - name: Run parser-to-evaluator integration tests
+        env:
+          DATABASE_URL: postgresql+psycopg://postgres:postgres@localhost:5432/govcareer
+        run: python -m pytest tests/test_eligibility_integration.py -q
+
       - name: Run ORM smoke tests
         env:
           DATABASE_URL: postgresql+psycopg://postgres:postgres@localhost:5432/govcareer
