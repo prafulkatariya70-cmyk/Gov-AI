@@ -48,7 +48,7 @@ def test_application_tracker_has_user_job_uniqueness_constraint():
 def test_production_api_routes_are_registered():
     from app.main import app
 
-    paths = {route.path for route in app.routes}
+    paths = set(app.openapi()["paths"])
     assert "/api/v1/health" in paths
     assert "/api/v1/jobs" in paths
     assert "/api/v1/jobs/{identifier}" in paths
