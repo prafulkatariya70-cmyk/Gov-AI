@@ -9,11 +9,10 @@
 # If the `testing_agent` is available, main agent should delegate all testing tasks to it.
 #
 # You have access to a file called `test_result.md`. This file contains the complete testing state
-# and history, and is the primary means of communication between main and the testing agent.
+# and history, and is the primary means of communication between main and testing agent.
 #
-# Main and testing agents must follow this exact format to maintain testing data. 
-# The testing data must be entered in yaml format Below is the data structure:
-# 
+# Main and testing agents must follow this exact format to maintain testing data.
+#
 ## user_problem_statement: {problem_statement}
 ## backend:
 ##   - task: "Task name"
@@ -73,7 +72,7 @@
 #    - When a user provides feedback that something is or isn't working, add this information to the relevant task's status_history
 #    - Update the working status based on user feedback
 #    - If user reports an issue with a task that was marked as working, increment the stuck_count
-#    - Whenever user reports issue in the app, if we have testing agent and task_result.md file so find the appropriate task for that and append in status_history of that task to contain the user concern and problem as well 
+#    - Whenever user reports issue in the app, if we have testing agent and task_result.md file so find the appropriate task for that and append in status_history of that task to contain the user concern and problem as well
 #
 # 3. Track Stuck Tasks:
 #    - Monitor which tasks have high stuck_count values or where you are fixing same issue again and again, analyze that when you read task_result.md
@@ -117,7 +116,7 @@ backend:
         agent: "main"
         comment: "Initial migration previously completed successfully in GitHub Actions."
   - task: "Eligibility intelligence integration boundary"
-    implemented: false
+    implemented: true
     working: "NA"
     file: "backend/app/services/eligibility/"
     stuck_count: 0
@@ -126,20 +125,44 @@ backend:
     status_history:
       - working: "NA"
         agent: "main"
-        comment: "Eligibility integration is the active implementation focus. Existing parser/normalizer/evaluator behavior will be preserved and wrapped behind a production service boundary."
-
+        comment: "Production orchestration boundary exists and is covered by deterministic boundary tests."
+      - working: "NA"
+        agent: "main"
+        comment: "Recovered the existing rule models, EligibilityNormalizer, and EligibilityEvaluator from the user's prior project source; next CI gate will validate parser -> normalizer -> evaluator behavior."
+  - task: "Notification parser integration"
+    implemented: true
+    working: true
+    file: "backend/app/services/documents/parsing/notification_parser.py"
+    stuck_count: 0
+    priority: "high"
+    needs_retesting: true
+    status_history:
+      - working: true
+        agent: "main"
+        comment: "Parser regression suite previously passed in GitHub Actions."
+  - task: "Parser-to-normalizer-to-evaluator integration"
+    implemented: true
+    working: "NA"
+    file: "backend/tests/test_eligibility_integration.py"
+    stuck_count: 0
+    priority: "high"
+    needs_retesting: true
+    status_history:
+      - working: "NA"
+        agent: "main"
+        comment: "Deterministic end-to-end rule evaluation tests are being added without changing the parser or rule semantics."
 frontend: []
 
 metadata:
   created_by: "main_agent"
   version: "1.0"
-  test_sequence: 2
+  test_sequence: 3
   run_ui: false
 
 test_plan:
   current_focus:
-    - "Build eligibility service boundary around existing intelligence"
-    - "Add deterministic parser-to-evaluator integration tests"
+    - "Run deterministic parser -> normalizer -> evaluator integration tests"
+    - "Verify empty/unknown eligibility remains NEEDS_REVIEW"
     - "Run ORM and Alembic regression gates"
   stuck_tasks: []
   test_all: false
@@ -147,4 +170,4 @@ test_plan:
 
 agent_communication:
   - agent: "main"
-    message: "Test state updated before the eligibility integration cycle. PostgreSQL foundation is protected by the existing CI gate; no testing-agent tool is available in this session."
+    message: "Testing state updated before the integration test cycle. No testing-agent tool is available in this session; GitHub Actions is the validation gate."
