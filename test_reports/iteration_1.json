@@ -1,0 +1,20 @@
+{
+  "summary": "Initial full-stack validation completed: all six API regression tests passed and core mobile web journeys loaded and responded.",
+  "backend_issues": {"critical": [], "minor": []},
+  "frontend_issues": {
+    "ui_bugs": [{"component": "Calendar pipeline", "issue": "An 'Unexpected text node: .' warning/toast appears while viewing the application pipeline; likely an unwrapped raw text node in a React Native tree.", "testID": "view-mode-pipeline-btn", "priority": "MEDIUM"}],
+    "integration_issues": [],
+    "design_issues": [],
+    "react_native_issues": [{"component": "Calendar pipeline rendering", "issue": "React Native web preview reports an unexpected text node warning during pipeline display; inspect JSX around pipeline cards and any conditional punctuation/text outside Text."}]
+  },
+  "test_report_links": ["/app/backend/tests/test_portal_api.py", "/app/test_reports/pytest/portal_results.xml", "/app/test_reports/ui/home.png"],
+  "action_items": ["Remove the unwrapped text node causing the Calendar pipeline warning.", "Update frontend API configuration to use the required EXPO_BACKEND_URL environment key and fail fast rather than falling back to localhost.", "Remove backend localhost/database defaults so missing protected environment configuration fails fast."],
+  "critical_code_review_comments": ["frontend/src/api/apiClient.ts reads EXPO_PUBLIC_BACKEND_URL and falls back to localhost instead of using EXPO_BACKEND_URL as specified.", "backend/server.py supplies localhost and sarkari_job_portal defaults for MONGO_URL/DB_NAME, contrary to the environment-only configuration requirement."],
+  "updated_files": ["/app/backend/tests/test_portal_api.py", "/app/test_reports/iteration_1.json"],
+  "success_rate": {"backend": "100% (6/6)", "frontend": "100% for tested flows; 1 warning observed"},
+  "seed_data_creation": "No new seed data; existing demo_candidate and seeded jobs used. Test tracker data was deleted and profile was restored.",
+  "retest_needed": true,
+  "should_call_test_agent_after_fix": true,
+  "context_for_next_testing_agent": "Public preview tested at job-portal-govt.preview.emergentagent.com using 375x667 viewport. Home search/sync, Matches, Calendar/pipeline, GK Hub, job detail, gazette modal, and direct apply were exercised.",
+  "rca_of_issue": "Calendar pipeline navigation reproduced an Unexpected text node warning after switching to My Pipeline. The pipeline JSX contains text-bearing conditional/emoji content and should be audited for any literal text outside Text components."
+}
