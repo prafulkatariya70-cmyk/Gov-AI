@@ -998,3 +998,5 @@ class NotificationParser:
             return self._field(
                 "PROFESSIONAL_ACCOUNTING_TRAINING",
                 match.group(0),
+                "high",
+            )
