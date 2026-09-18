@@ -89,35 +89,64 @@
 
 #====================================================================================================
 # Testing Data - Main Agent and Testing sub agent both should log testing data below this section
-#====================================================================================================
 
 user_problem_statement: "Productionize GovCareerAI foundation without breaking the existing working prototype."
 backend:
-  - task: "PostgreSQL SQLAlchemy ORM foundation"
+  - task: "Persisted eligibility evaluation service"
     implemented: true
     working: "NA"
+    file: "backend/app/services/eligibility/job_service.py"
+    stuck_count: 0
+    priority: "high"
+    needs_retesting: true
+    status_history:
+      - working: "NA"
+        agent: "main"
+        comment: "Added a production service that loads a PostgreSQL job eligibility record and user profile, reconstructs normalized rule trees, maps profile data into the existing CandidateProfile contract, and delegates decisions to the existing evaluator without duplicating business rules."
+  - task: "Eligibility persistence repository"
+    implemented: true
+    working: "NA"
+    file: "backend/app/repositories/job_eligibility.py"
+    stuck_count: 0
+    priority: "high"
+    needs_retesting: true
+    status_history:
+      - working: "NA"
+        agent: "main"
+        comment: "Added repository lookup for job eligibility and user profile records using SQLAlchemy."
+  - task: "Production eligibility regression tests"
+    implemented: true
+    working: "NA"
+    file: "backend/tests/test_job_eligibility_service.py"
+    stuck_count: 0
+    priority: "high"
+    needs_retesting: true
+    status_history:
+      - working: "NA"
+        agent: "main"
+        comment: "Added deterministic SQLite-backed tests for persisted rule reconstruction, eligible age evaluation, missing-profile data producing NEEDS_REVIEW, and missing job eligibility handling."
+  - task: "PostgreSQL SQLAlchemy ORM foundation"
+    implemented: true
+    working: true
     file: "backend/app/models/"
     stuck_count: 0
     priority: "high"
-    needs_retesting: true
+    needs_retesting: false
     status_history:
       - working: true
         agent: "main"
-        comment: "ORM foundation and Alembic schema were previously verified by GitHub Actions."
-      - working: "NA"
-        agent: "main"
-        comment: "Latest CI reached the ORM suite; four model checks passed. The API route-registration test failed because FastAPI's app.routes contains an internal included-router object without a direct path attribute. The test is being corrected to inspect the generated OpenAPI path map instead of internal route implementation details."
+        comment: "Foundation gate is green in GitHub Actions, including ORM smoke and Alembic verification."
   - task: "Alembic initial migration"
     implemented: true
-    working: "NA"
+    working: true
     file: "backend/alembic/versions/0001_initial_schema.py"
     stuck_count: 0
     priority: "high"
-    needs_retesting: true
+    needs_retesting: false
     status_history:
       - working: true
         agent: "main"
-        comment: "Initial migration previously completed successfully in GitHub Actions."
+        comment: "Alembic upgrade reached head 0002 in the latest green foundation CI run."
   - task: "Eligibility intelligence integration boundary"
     implemented: true
     working: true
@@ -128,7 +157,7 @@ backend:
     status_history:
       - working: true
         agent: "main"
-        comment: "Production orchestration boundary exists and CI passed the deterministic boundary tests."
+        comment: "Existing parser-normalizer-evaluator boundary remains green and is reused by the persisted eligibility service."
   - task: "Notification parser integration"
     implemented: true
     working: true
@@ -139,35 +168,24 @@ backend:
     status_history:
       - working: true
         agent: "main"
-        comment: "Full verified parser is restored on the production branch and CI parser regression passed."
-  - task: "Parser-to-normalizer-to-evaluator integration"
-    implemented: true
-    working: true
-    file: "backend/tests/test_eligibility_integration.py"
-    stuck_count: 0
-    priority: "high"
-    needs_retesting: false
-    status_history:
-      - working: true
-        agent: "main"
-        comment: "CI passed the deterministic parser -> normalizer -> evaluator integration suite."
+        comment: "Full verified parser remains unchanged by this work."
 frontend: []
 
 metadata:
   created_by: "main_agent"
   version: "1.0"
-  test_sequence: 4
+  test_sequence: 5
   run_ui: false
 
 test_plan:
   current_focus:
-    - "Re-run ORM smoke tests after making route registration assertion implementation-independent"
-    - "Run Alembic upgrade and revision verification"
-    - "Confirm all foundation gates remain green before the next production change"
+    - "Run persisted eligibility service regression tests"
+    - "Run full backend foundation suite"
+    - "Verify Alembic head remains 0002"
   stuck_tasks: []
   test_all: false
   test_priority: "high_first"
 
 agent_communication:
   - agent: "main"
-    message: "CI run #63 passed eligibility boundary, parser regression, and parser-to-evaluator integration. ORM smoke had four passes and one test failure caused by the test inspecting FastAPI internal route objects. I am applying a surgical test-only correction to use app.openapi() and will then re-run the full foundation gate."
+    message: "Next production slice connects PostgreSQL-stored eligibility rules and user profiles to the existing evaluator. No business-rule duplication and no Emergent credits used. Testing agent tooling is unavailable, so GitHub Actions is the validation gate."
