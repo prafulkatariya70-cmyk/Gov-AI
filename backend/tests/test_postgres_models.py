@@ -34,3 +34,12 @@ def test_required_model_columns_exist():
     assert {"job_id", "normalized_rules"}.issubset(JobEligibility.__table__.columns.keys())
     assert {"job_id", "official_url", "notification_pdf_url"}.issubset(JobSource.__table__.columns.keys())
     assert {"user_id", "job_id", "status"}.issubset(ApplicationTracker.__table__.columns.keys())
+
+
+def test_application_tracker_has_user_job_uniqueness_constraint():
+    constraints = {
+        constraint.name
+        for constraint in ApplicationTracker.__table__.constraints
+        if constraint.name
+    }
+    assert "uq_application_tracker_user_job" in constraints
