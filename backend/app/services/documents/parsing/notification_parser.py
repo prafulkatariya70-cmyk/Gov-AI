@@ -822,8 +822,6 @@ class NotificationParser:
                 match.group(0),
                 "high",
             )
-                "high",
-            )
 
         # ============================================================
         # POSTGRADUATION
