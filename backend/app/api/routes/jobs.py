@@ -4,8 +4,9 @@ from fastapi import APIRouter, Depends, HTTPException, Query
 from sqlalchemy.orm import Session
 
 from app.core.database import get_db
+from app.repositories.job_eligibility import JobEligibilityRepository
 from app.repositories.jobs import JobRepository
-from app.schemas.job import JobListResponse, JobSummary
+from app.schemas.job import JobEligibilityResponse, JobListResponse, JobSummary
 
 router = APIRouter(prefix="/jobs", tags=["jobs"])
 
@@ -33,6 +34,25 @@ def list_jobs(
         status=status,
     )
     return JobListResponse(count=total, page=page, page_size=page_size, jobs=jobs)
+
+
+@router.get("/{identifier}/eligibility", response_model=JobEligibilityResponse)
+def get_job_eligibility(
+    identifier: str,
+    db: Session = Depends(get_db),
+) -> JobEligibilityResponse:
+    job = JobRepository(db).get_by_id_or_slug(identifier)
+    if not job:
+        raise HTTPException(status_code=404, detail="Job posting not found")
+
+    eligibility = JobEligibilityRepository(db).get_by_job_id(job.id)
+    if not eligibility:
+        raise HTTPException(
+            status_code=404,
+            detail="Eligibility requirements not available for this job",
+        )
+
+    return eligibility
 
 
 @router.get("/{identifier}", response_model=JobSummary)
