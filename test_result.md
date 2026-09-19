@@ -155,5 +155,5 @@ test_plan:
   test_priority: "high_first"
 
 agent_communication:
-  - agent: "main"
-    message: "Foundation run #74 is green. Next slice closes the gap between the evaluator's full CandidateProfile contract and the persisted user profile, then validates migration 0003. No Emergent credits used."
+- agent: "main"
+    message: "CI run #86 exposed a test-fixture defect, not an application defect: the new mapping test seeded only DOB, so the structured profile fields were correctly read as NULL. The fixture is now corrected; rerun the full gate before proceeding."
