@@ -11,6 +11,9 @@ on:
 jobs:
   postgres-foundation:
     runs-on: ubuntu-latest
+    env:
+      DATABASE_URL: postgresql+psycopg://postgres:postgres@localhost:5432/govcareer
+      JWT_SECRET: ci-test-secret-change-me
     services:
       postgres:
         image: postgres:18
