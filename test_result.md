@@ -287,3 +287,37 @@ test_plan:
 agent_communication:
 - agent: "main"
   message: "Profile API is implemented only after the auth foundation was wired into CI. The next verification must cover auth and profile together before personalized eligibility is exposed."
+
+
+# Personalized eligibility API update
+backend:
+  - task: "Authenticated personalized job eligibility API"
+    implemented: true
+    working: "NA"
+    file: "backend/app/api/routes/jobs.py"
+    stuck_count: 0
+    priority: "high"
+    needs_retesting: true
+    status_history:
+      - working: "NA"
+        agent: "main"
+        comment: "Added GET /api/v1/jobs/{identifier}/eligibility/me. The endpoint authenticates the user, resolves the job by slug or UUID, loads persisted PostgreSQL eligibility rules and the authenticated profile, then delegates the final decision to the existing evaluator. A test fixture was aligned with the evaluator's exact persisted rule names before verification."
+
+metadata:
+  test_sequence: 11
+
+test_plan:
+  current_focus:
+    - "Run authentication tests"
+    - "Run profile API tests"
+    - "Run personalized eligibility API tests"
+    - "Run eligibility engine and parser regression tests"
+    - "Run ORM and persisted eligibility service tests"
+    - "Verify Alembic upgrade remains at 0003"
+  stuck_tasks: []
+  test_all: true
+  test_priority: "high_first"
+
+agent_communication:
+- agent: "main"
+  message: "The personalized eligibility endpoint now completes the authenticated request-time path. It does not parse PDFs during requests; it evaluates only persisted normalized rules, preserving the production separation between ingestion and evaluation."
