@@ -19,6 +19,8 @@ class Job(Base):
     state: Mapped[str] = mapped_column(String(100), index=True)
     category: Mapped[str] = mapped_column(String(100), index=True)
     post_name: Mapped[str] = mapped_column(String(500))
+    advertisement_number: Mapped[str | None] = mapped_column(String(50), nullable=True, index=True)
+    vacancy_number: Mapped[str | None] = mapped_column(String(50), nullable=True, unique=True, index=True)
     total_vacancies: Mapped[int] = mapped_column(Integer, default=0)
     qualification_required: Mapped[str | None] = mapped_column(String(150), nullable=True)
     qualification_details: Mapped[str | None] = mapped_column(Text, nullable=True)
