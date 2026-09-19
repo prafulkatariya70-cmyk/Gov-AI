@@ -196,7 +196,7 @@ export const api = {
     const profile = await request<any>("/profile");
     return {
       ...profile,
-      additional_certs: profile.additional_certs || [],
+      additional_certs: typeof profile.additional_certs === "string"\n        ? profile.additional_certs.split(",").map((value: string) => value.trim()).filter(Boolean)\n        : profile.additional_certs || [],
       preferred_categories: profile.preferred_categories
         ? profile.preferred_categories.split(",").map((value: string) => value.trim()).filter(Boolean)
         : [],
@@ -218,7 +218,7 @@ export const api = {
       degree_name: profile.degree_name || null,
       stream: profile.stream || null,
       percentage_or_cgpa: profile.percentage_or_cgpa || null,
-      additional_certs: profile.additional_certs || null,
+      additional_certs: Array.isArray(profile.additional_certs)\n        ? profile.additional_certs.join(", ")\n        : profile.additional_certs || null,
       height_cm: profile.height_cm ?? null,
       preferred_categories: Array.isArray(profile.preferred_categories)
         ? profile.preferred_categories.join(", ")
@@ -235,7 +235,7 @@ export const api = {
 
     return {
       ...updated,
-      additional_certs: updated.additional_certs || [],
+      additional_certs: typeof updated.additional_certs === "string"\n        ? updated.additional_certs.split(",").map((value: string) => value.trim()).filter(Boolean)\n        : updated.additional_certs || [],
       preferred_categories: updated.preferred_categories
         ? updated.preferred_categories.split(",").map((value: string) => value.trim()).filter(Boolean)
         : [],
