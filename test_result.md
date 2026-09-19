@@ -196,3 +196,10 @@ agent_communication:
 - Verify the UI renders ELIGIBLE, NEEDS REVIEW, or NOT ELIGIBLE from backend status.
 - Verify reasons, passed requirements, failed requirements, unknown requirements, and evidence are rendered without a client-side match-score fallback.
 - Run the authenticated eligibility API contract test and the full backend foundation workflow.
+
+
+## Application tracker verification plan
+- Verify authenticated tracker list, upsert, update, and delete routes.
+- Verify tracker records are scoped to the authenticated user and linked to real jobs.
+- Verify frontend tracker API methods use the production /api/v1/tracker endpoints.
+- Run the full backend foundation workflow.
