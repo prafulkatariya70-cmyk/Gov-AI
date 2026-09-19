@@ -488,3 +488,38 @@ test_plan:
 agent_communication:
 - agent: "main"
   message: "The worker is intentionally callable as a service rather than embedded in FastAPI startup. Production scheduling can run it from a separate worker/cron process, preventing long-running PDF/OCR work from blocking API requests."
+
+
+# Ingestion cycle orchestration update
+backend:
+  - task: "Source discovery to queue to worker orchestration"
+    implemented: true
+    working: "NA"
+    file: "backend/app/services/jobs/ingestion_cycle.py"
+    stuck_count: 0
+    priority: "high"
+    needs_retesting: true
+    status_history:
+      - working: "NA"
+        agent: "main"
+        comment: "Added one bounded ingestion-cycle service that checks due official sources, enqueues newly discovered PDFs idempotently, and processes a bounded number of pending queue items. It is callable by an external scheduler/worker and is not executed inside FastAPI startup."
+
+metadata:
+  test_sequence: 17
+
+test_plan:
+  current_focus:
+    - "Run ingestion-cycle orchestration tests with fake discovery and processor"
+    - "Run notification queue tests"
+    - "Run official source and source discovery tests"
+    - "Run document processing and job ingestion tests"
+    - "Run Alembic upgrade through 0005"
+    - "Run authentication, profile and personalized eligibility API tests"
+    - "Run parser/normalizer/evaluator/persistence regression tests"
+  stuck_tasks: []
+  test_all: true
+  test_priority: "high_first"
+
+agent_communication:
+- agent: "main"
+  message: "The ingestion cycle is deliberately a bounded orchestration primitive, not an always-on process. Deployment can invoke it every few minutes from a scheduler or worker environment without tying background work to FastAPI lifecycle."
