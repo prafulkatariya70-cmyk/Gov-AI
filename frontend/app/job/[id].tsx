@@ -13,7 +13,6 @@ import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { api } from "@/src/api/apiClient";
 import { useTheme, makeStyles } from "@/src/theme";
-import { MatchScoreBadge } from "@/src/components/MatchScoreBadge";
 import { OfficialNotificationModal } from "@/src/components/OfficialNotificationModal";
 import {
   ArrowLeft,
@@ -63,6 +62,16 @@ export default function JobDetailScreen() {
     queryFn: () => api.getTracker(),
   });
 
+  const {
+    data: eligibility,
+    isLoading: isEligibilityLoading,
+    isError: isEligibilityError,
+  } = useQuery({
+    queryKey: ["job-eligibility-me", id],
+    queryFn: () => api.getMyJobEligibility(id as string),
+    enabled: !!id,
+  });
+
   // Check if job is tracked
   const isBookmarked =
     trackerData?.saved.some((t) => t.job_id === job?.id) ||
@@ -106,9 +115,6 @@ export default function JobDetailScreen() {
       );
     }
   };
-
-  const matchInfo = job?.match_info;
-  const matchScore = matchInfo?.match_percentage ?? 75;
 
   if (isLoading) {
     return (
@@ -244,62 +250,58 @@ export default function JobDetailScreen() {
           </View>
         </View>
 
-        {/* Smart Eligibility Matcher Breakdown Card */}
-        {matchInfo && (
-          <View testID="match-breakdown-card" style={styles.matchCard}>
-            <View style={styles.matchCardHeader}>
-              <View style={{ flexDirection: "row", alignItems: "center", gap: 6 }}>
-                <Sparkles size={18} color={colors.brandPrimary} />
-                <Text style={styles.matchCardTitle}>Your Eligibility Match</Text>
-              </View>
-              <MatchScoreBadge score={matchScore} size="md" isFullyEligible={matchInfo.is_fully_eligible} />
+        {/* Real persisted eligibility decision */}
+        <View testID="eligibility-decision-card" style={styles.matchCard}>
+          <View style={styles.matchCardHeader}>
+            <View style={{ flexDirection: "row", alignItems: "center", gap: 6 }}>
+              <ShieldCheck size={18} color={colors.brandPrimary} />
+              <Text style={styles.matchCardTitle}>Eligibility Check</Text>
             </View>
-
-            {/* Breakdown checks */}
-            <View style={styles.criteriaList}>
-              {/* Age check */}
-              <View style={styles.criteriaItem}>
-                {matchInfo.age_check.is_eligible ? (
-                  <CheckCircle2 size={16} color="#15803D" />
-                ) : (
-                  <XCircle size={16} color="#B91C1C" />
-                )}
-                <View style={{ flex: 1 }}>
-                  <Text style={styles.criteriaName}>Age Criterion</Text>
-                  <Text style={styles.criteriaSub}>
-                    Your age: {matchInfo.age_check.candidate_age}y (Allowed: {matchInfo.age_check.allowed_range} with {matchInfo.age_check.category} relaxation of +{matchInfo.age_check.category_relaxation_years}y)
-                  </Text>
-                </View>
-              </View>
-
-              {/* Qualification check */}
-              <View style={styles.criteriaItem}>
-                {matchInfo.qualification_check.is_eligible ? (
-                  <CheckCircle2 size={16} color="#15803D" />
-                ) : (
-                  <AlertTriangle size={16} color="#B45309" />
-                )}
-                <View style={{ flex: 1 }}>
-                  <Text style={styles.criteriaName}>Educational Qualification</Text>
-                  <Text style={styles.criteriaSub}>
-                    Required: {job.qualification_required} (Your profile: {matchInfo.qualification_check.candidate_qualification})
-                  </Text>
-                </View>
-              </View>
-
-              {/* Domicile check */}
-              <View style={styles.criteriaItem}>
-                <CheckCircle2 size={16} color="#15803D" />
-                <View style={{ flex: 1 }}>
-                  <Text style={styles.criteriaName}>Domicile & Quota</Text>
-                  <Text style={styles.criteriaSub}>
-                    {job.domicile_rule} ({matchInfo.domicile_check.candidate_domicile})
-                  </Text>
-                </View>
-              </View>
-            </View>
+            {isEligibilityLoading ? (
+              <ActivityIndicator size="small" color={colors.brandPrimary} />
+            ) : (
+              <Text style={styles.eligibilityStatusText}>
+                {eligibility?.status === "ELIGIBLE" ? "ELIGIBLE" : eligibility?.status === "NOT_ELIGIBLE" ? "NOT ELIGIBLE" : eligibility?.status === "NEEDS_REVIEW" ? "NEEDS REVIEW" : "UNAVAILABLE"}
+              </Text>
+            )}
           </View>
-        )}
+          {isEligibilityError ? (
+            <Text style={styles.criteriaSub}>We could not evaluate this job against your profile right now.</Text>
+          ) : eligibility ? (
+            <>
+              {eligibility.reasons.map((reason, index) => (
+                <View key={"reason-" + index} style={styles.criteriaItem}>
+                  <Info size={16} color={colors.info} />
+                  <Text style={[styles.criteriaSub, { flex: 1 }]}>{reason}</Text>
+                </View>
+              ))}
+              {eligibility.failed_requirements.length > 0 && (
+                <View style={styles.eligibilityGroup}>
+                  <Text style={styles.criteriaName}>Requirements not met</Text>
+                  {eligibility.failed_requirements.map((item, index) => <Text key={"failed-" + index} style={styles.criteriaSub}>• {item}</Text>)}
+                </View>
+              )}
+              {eligibility.unknown_requirements.length > 0 && (
+                <View style={styles.eligibilityGroup}>
+                  <Text style={styles.criteriaName}>Needs verification</Text>
+                  {eligibility.unknown_requirements.map((item, index) => <Text key={"unknown-" + index} style={styles.criteriaSub}>• {item}</Text>)}
+                </View>
+              )}
+              {eligibility.passed_requirements.length > 0 && (
+                <View style={styles.eligibilityGroup}>
+                  <Text style={styles.criteriaName}>Requirements passed</Text>
+                  {eligibility.passed_requirements.map((item, index) => <Text key={"passed-" + index} style={styles.criteriaSub}>• {item}</Text>)}
+                </View>
+              )}
+              {eligibility.evidence.length > 0 && (
+                <View style={styles.eligibilityGroup}>
+                  <Text style={styles.criteriaName}>Evidence</Text>
+                  {eligibility.evidence.map((item, index) => <Text key={"evidence-" + index} style={styles.criteriaSub}>{typeof item === "string" ? item : JSON.stringify(item)}</Text>)}
+                </View>
+              )}
+            </>
+          ) : null}
+        </View>
 
         {/* Vacancies Breakdown Table */}
         {job.vacancies_breakdown && (
@@ -718,6 +720,8 @@ const useStyles = makeStyles((colors) => ({
     color: colors.muted,
     lineHeight: 15,
   },
+  eligibilityStatusText: { fontSize: 11, fontWeight: "800", color: colors.brandPrimary },
+  eligibilityGroup: { marginTop: 10, gap: 3 },
   sectionCard: {
     backgroundColor: colors.surfaceSecondary,
     borderColor: colors.border,
