@@ -215,3 +215,10 @@ agent_communication:
 ## CI coverage update
 - Application tracker API tests are now explicitly executed in the backend foundation workflow.
 - Official sync API tests are now explicitly executed in the backend foundation workflow.
+
+
+## Scheduled ingestion verification plan
+- Verify scheduled ingestion is protected by a dedicated machine-to-machine token.
+- Verify missing and incorrect tokens return 401.
+- Verify the hourly GitHub Actions workflow calls the protected ingestion endpoint using repository secrets.
+- Do not claim live production scheduling until deployment secrets are configured.
