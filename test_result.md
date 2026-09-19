@@ -556,3 +556,36 @@ test_plan:
 agent_communication:
 - agent: "main"
   message: "The data contract now distinguishes source provenance from user-facing application destinations. If a listing only exposes a notification PDF, GovCareerAI will retain the official source rather than inventing an application URL."
+
+
+# Real UPSC notification compatibility update
+backend:
+  - task: "UPSC recruitment notification enrichment"
+    implemented: true
+    working: "NA"
+    file: "backend/app/services/documents/parsing/notification_enhancer.py"
+    stuck_count: 0
+    priority: "high"
+    needs_retesting: true
+    status_history:
+      - working: "NA"
+        agent: "main"
+        comment: "A real current UPSC Advertisement No. 52/2026 was inspected from the official UPSC recruitment advertisement page. Its wording uses 'Eighty vacancies for the post of...', category-specific ages, and 'closing date for submission...' patterns that the generic parser did not recognize in a local compatibility check. Added a narrow post-parser enrichment layer rather than modifying the large proven parser wholesale."
+
+metadata:
+  test_sequence: 19
+
+test_plan:
+  current_focus:
+    - "Run real UPSC text compatibility test"
+    - "Run document processing regression with enriched parser"
+    - "Run job ingestion and ingestion-cycle tests"
+    - "Run full parser/normalizer/evaluator/persistence regression suite"
+    - "Run Alembic upgrade through 0005"
+  stuck_tasks: []
+  test_all: true
+  test_priority: "high_first"
+
+agent_communication:
+- agent: "main"
+  message: "The real-notification check exposed a parser vocabulary gap before production ingestion. The fix is intentionally narrow: preserve the proven parser and enrich only documented UPSC-style vacancy/title/age/date/pay patterns, with evidence and conservative confidence."
