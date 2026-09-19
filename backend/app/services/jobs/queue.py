@@ -15,7 +15,7 @@ class NotificationQueueService:
         if created: self.db.commit()
         return created
     def process_one(self, item: NotificationQueueItem):
-        item.status="PROCESSING"; item.attempts += 1; self.db.commit()
+        item.status="PROCESSING"; item.attempts=(item.attempts or 0) + 1; self.db.commit()
         try:
             result=self.processor.process(notification_pdf_url=item.pdf_url,official_source_url=item.source_page_url,official_website_url=item.source_page_url)
             item.status="PROCESSED"; item.processed_at=datetime.now(timezone.utc); item.last_error=None; item.next_attempt_at=None; self.db.commit(); return result
