@@ -6,6 +6,7 @@ os.environ.setdefault("JWT_SECRET", "test-secret-for-ci")
 
 from fastapi.testclient import TestClient
 from sqlalchemy import create_engine
+from sqlalchemy.pool import StaticPool
 from sqlalchemy.orm import Session
 
 from app.core.database import Base, get_db
@@ -14,7 +15,11 @@ from app.main import app
 
 
 def _session():
-    engine = create_engine("sqlite+pysqlite:///:memory:")
+    engine = create_engine(
+        "sqlite+pysqlite://",
+        connect_args={"check_same_thread": False},
+        poolclass=StaticPool,
+    )
     Base.metadata.create_all(engine)
     return Session(engine)
 
