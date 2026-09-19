@@ -34,8 +34,8 @@ def test_personalized_eligibility_uses_authenticated_profile():
         session.add_all([profile, job])
         session.flush()
         eligibility = JobEligibility(job_id=job.id, normalized_rules={
-            "age_rules": [{"rule_type": "MAX_AGE", "value": 56, "confidence": "high"}],
-            "service_rules": [{"rule_type": "GOVERNMENT_SERVICE", "value": True, "confidence": "high"}],
+            "age_rules": [{"rule_type": "MAXIMUM_AGE", "value": 56, "confidence": "high"}],
+            "service_rules": [{"rule_type": "GOVERNMENT_SERVICE_REQUIRED", "value": True, "confidence": "high"}],
             "experience_rules": [{"rule_type": "MIN_EXPERIENCE_YEARS", "value": 5, "confidence": "high"}],
             "pay_rules": [{"rule_type": "PAY_LEVEL", "value": 7, "confidence": "high"}],
         })
