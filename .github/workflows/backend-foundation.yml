@@ -76,6 +76,11 @@ jobs:
           JWT_SECRET: ci-test-secret-change-me
         run: python -m pytest tests/test_job_ingestion.py -q
 
+      - name: Run job lifecycle status tests
+        env:
+          DATABASE_URL: postgresql+psycopg://postgres:postgres@localhost:5432/govcareer
+        run: python -m pytest tests/test_job_status.py -q
+
       - name: Run UPSC notification compatibility tests
         env:
           DATABASE_URL: postgresql+psycopg://postgres:postgres@localhost:5432/govcareer
