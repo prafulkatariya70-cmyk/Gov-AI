@@ -15,3 +15,14 @@ class JobEligibilityResponse(BaseModel):
     special_requirements: str | None = None
     created_at: datetime
     updated_at: datetime
+
+
+class EligibilityDecisionResponse(BaseModel):
+    status: str
+    reasons: list[str] = []
+    failed_requirements: list[str] = []
+    unknown_requirements: list[str] = []
+    passed_requirements: list[str] = []
+    evidence: list[dict] = []
+    score: float | None = None
+    confidence: str | None = None
