@@ -43,3 +43,14 @@ CLOSING DATE FOR SUBMISSION OF ONLINE RECRUITMENT APPLICATION THROUGH WEBSITE IS
     assert parsed.maximum_age.value == 40
     assert parsed.application_start.value == date(2026, 9, 12)
     assert parsed.application_end.value == date(2026, 10, 2)
+
+
+def test_upsc_notification_identity_fields_are_extracted():
+    text = """
+    ADVERTISEMENT NO. 11/2026
+    UNION PUBLIC SERVICE COMMISSION
+    (Vacancy No. 26091106212) 140 posts of Assistant Public Prosecutor
+    """
+    parsed = NotificationParserEnhancer().parse(text)
+    assert parsed.advertisement_number.value == "11-2026"
+    assert parsed.vacancy_number.value == "26091106212"
