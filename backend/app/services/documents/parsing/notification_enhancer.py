@@ -18,6 +18,8 @@ class NotificationParserEnhancer:
         m=re.search(r"(?:\b\w[\w -]*\s+)?vacancies?\s+for\s+the\s+posts?\s+of\s+([^\n.]+)",normalized,re.I)
         if not m:
             m=re.search(r"\b(?:recruitment|applications?)\b.{0,120}?\bposts?\s+of\s+([^\n.]+)",normalized,re.I|re.S)
+        if not m:
+            m=re.search(r"\b\d{1,4}\s+posts?\s+of\s+([^\n.]+)",normalized,re.I)
         if not title.value and m: title=ParsedField(m.group(1).strip(),m.group(0),"high")
         m=re.search(r"\b(one|two|three|four|five|six|seven|eight|nine|ten|eleven|twelve|thirteen|fourteen|fifteen|sixteen|seventeen|eighteen|nineteen|twenty|thirty|forty|fifty|sixty|seventy|eighty|ninety|one hundred)\s+vacancies?\s+for\s+the\s+posts?",normalized,re.I)
         if not vacancy.value:
