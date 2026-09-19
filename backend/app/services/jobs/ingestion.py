@@ -22,7 +22,7 @@ class JobIngestionService:
         job=self._find_job(source, parsed)
         if job is None:
             title=str(parsed.title.value).strip(); board=str(parsed.organization_name.value or "Government Recruitment").strip()
-            job=Job(title=title,slug=self._slug(title,board,content_hash),board=board,board_code=self._board_code(board),job_type=str(parsed.opportunity_type.value or "RECRUITMENT").strip(),state="All India",category="Government Jobs",post_name=title,total_vacancies=self._int_value(parsed.vacancy_count.value) or 0,qualification_required=str(parsed.degree.value) if parsed.degree.value else None,qualification_details=self._field_text(parsed,"qualification_text"),min_age=self._int_value(parsed.minimum_age.value),max_age=self._int_value(parsed.maximum_age.value),start_date=self._date_value(parsed.application_start.value),last_date=self._date_value(parsed.application_end.value),salary_scale=self._field_text(parsed,"salary_text"),official_apply_url=official_apply_url,official_notification_pdf_url=notification_pdf_url,official_website_url=official_website_url or official_url,status="NO_DEADLINE",is_new_today=False)
+            job=Job(title=title,slug=self._slug(title,board,content_hash),board=board,board_code=self._board_code(board),job_type=str(parsed.opportunity_type.value or "RECRUITMENT").strip(),state="All India",category="Government Jobs",post_name=title,advertisement_number=self._field_value(parsed,"advertisement_number"),vacancy_number=self._field_value(parsed,"vacancy_number"),total_vacancies=self._int_value(parsed.vacancy_count.value) or 0,qualification_required=str(parsed.degree.value) if parsed.degree.value else None,qualification_details=self._field_text(parsed,"qualification_text"),min_age=self._int_value(parsed.minimum_age.value),max_age=self._int_value(parsed.maximum_age.value),start_date=self._date_value(parsed.application_start.value),last_date=self._date_value(parsed.application_end.value),salary_scale=self._field_text(parsed,"salary_text"),official_apply_url=official_apply_url,official_notification_pdf_url=notification_pdf_url,official_website_url=official_website_url or official_url,status="NO_DEADLINE",is_new_today=False)
             self.db.add(job); self.db.flush()
         else: self._update_job(job,parsed,official_url,notification_pdf_url,official_website_url,official_apply_url)
         self._refresh_status(job)
@@ -41,9 +41,17 @@ class JobIngestionService:
         if content_hash: return self.db.query(JobSource).filter(JobSource.content_hash==content_hash).one_or_none()
         return None
     def _find_job(self,source,parsed):
-        if source is not None: return self.db.get(Job,source.job_id)
-        title=str(parsed.title.value or "").strip(); board=str(parsed.organization_name.value or "").strip()
+        if source is not None:
+            return self.db.get(Job,source.job_id)
+        vacancy_number = self._field_value(parsed, "vacancy_number")
+        if vacancy_number:
+            job = self.db.query(Job).filter(Job.vacancy_number == vacancy_number).one_or_none()
+            if job is not None:
+                return job
+        title=str(parsed.title.value or "").strip()
+        board=str(parsed.organization_name.value or "").strip()
         return self.db.query(Job).filter(Job.title==title,Job.board==board).one_or_none()
+
     def _update_job(self,job,parsed,official_url,pdf_url,website_url,apply_url):
         vacancy_count = self._int_value(parsed.vacancy_count.value)
         min_age = self._int_value(parsed.minimum_age.value)
@@ -56,6 +64,12 @@ class JobIngestionService:
 
         # Parser passes can be partial. Never erase a previously verified value
         # merely because a later extraction did not recover that field.
+        advertisement_number = self._field_value(parsed, "advertisement_number")
+        vacancy_number = self._field_value(parsed, "vacancy_number")
+        if advertisement_number:
+            job.advertisement_number = advertisement_number
+        if vacancy_number:
+            job.vacancy_number = vacancy_number
         if vacancy_count is not None:
             job.total_vacancies = vacancy_count
         if min_age is not None:
@@ -89,6 +103,14 @@ class JobIngestionService:
         job.status = lifecycle.status
         job.is_closing_soon = lifecycle.is_closing_soon
         job.is_new_today = lifecycle.is_new_today
+
+    @staticmethod
+    def _field_value(parsed, field_name):
+        field = getattr(parsed, field_name, None)
+        if field is None:
+            return None
+        value = field.value
+        return str(value).strip() if value is not None and str(value).strip() else None
 
     @staticmethod
     def _field_text(parsed,field_name):
