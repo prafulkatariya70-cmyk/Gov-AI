@@ -1,0 +1,22 @@
+name: Scheduled Government Job Ingestion
+
+on:
+  schedule:
+    - cron: "17 * * * *"
+  workflow_dispatch:
+
+jobs:
+  ingest:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Run scheduled ingestion
+        env:
+          GOVCAREER_API_URL: ${{ secrets.GOVCAREER_API_URL }}
+          INGESTION_SYNC_TOKEN: ${{ secrets.INGESTION_SYNC_TOKEN }}
+        run: |
+          test -n "$GOVCAREER_API_URL"
+          test -n "$INGESTION_SYNC_TOKEN"
+          curl --fail --silent --show-error \\
+            --request POST \\
+            --header "X-Ingestion-Token: $INGESTION_SYNC_TOKEN" \\
+            "$GOVCAREER_API_URL/api/v1/sync/internal"
