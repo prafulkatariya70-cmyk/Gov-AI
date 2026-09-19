@@ -5,6 +5,7 @@ from sqlalchemy.orm import Session
 
 from app.core.database import Base
 from app.models import Job, JobEligibility, JobSource
+from app.services.documents.parsing.notification_enhancer import NotificationParserEnhancer
 from app.services.documents.parsing.notification_parser import NotificationParser
 from app.services.jobs.ingestion import JobIngestionService
 
@@ -106,7 +107,7 @@ def test_distinct_vacancy_numbers_do_not_collide_on_shared_pdf_url():
     Base.metadata.create_all(engine)
     db = Session(engine)
     try:
-        parser = NotificationParser()
+        parser = NotificationParserEnhancer()
         service = JobIngestionService(db)
         first = parser.parse("""
         UNION PUBLIC SERVICE COMMISSION
