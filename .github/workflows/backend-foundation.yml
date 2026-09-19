@@ -56,6 +56,12 @@ jobs:
       - name: Run production API contract tests
         run: python -m pytest tests/test_api_contract.py -q
 
+      - name: Run application tracker API tests
+        run: python -m pytest tests/test_application_tracker_api.py -q
+
+      - name: Run official sync API tests
+        run: python -m pytest tests/test_sync_api.py -q
+
       - name: Run notification parser regression tests
         run: python -m pytest tests/test_notification_parser.py -q
 
