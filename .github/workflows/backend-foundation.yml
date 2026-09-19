@@ -1,0 +1,110 @@
+name: Backend Foundation Verification
+
+on:
+  push:
+    branches:
+      - dev/production-foundation
+  pull_request:
+    branches:
+      - main
+
+jobs:
+  postgres-foundation:
+    runs-on: ubuntu-latest
+    services:
+      postgres:
+        image: postgres:18
+        env:
+          POSTGRES_USER: postgres
+          POSTGRES_PASSWORD: postgres
+          POSTGRES_DB: govcareer
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd="pg_isready -U postgres -d govcareer"
+          --health-interval=5s
+          --health-timeout=5s
+          --health-retries=20
+
+    defaults:
+      run:
+        working-directory: backend
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+
+      - name: Install foundation dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install "fastapi>=0.110.0" "email-validator>=2.2.0" "sqlalchemy>=2.0.36" "psycopg[binary]>=3.2.3" "alembic>=1.14.0" "PyMuPDF>=1.24.0" "Pillow>=10.0.0" "pytesseract>=0.3.13" "beautifulsoup4>=4.12.3" "pydantic>=2.6.4" "pydantic-settings>=2.6.1" "pytest>=8.0.0" "pytest-xdist>=3.6.0"
+
+      - name: Run eligibility engine boundary tests
+        env:
+          DATABASE_URL: postgresql+psycopg://postgres:postgres@localhost:5432/govcareer
+        run: python -m pytest tests/test_eligibility_engine.py -q
+
+      - name: Run authentication tests
+        env:
+          DATABASE_URL: postgresql+psycopg://postgres:postgres@localhost:5432/govcareer
+          JWT_SECRET: ci-test-secret-change-me
+        run: python -m pytest tests/test_auth.py -q
+
+      - name: Run notification parser regression tests
+        env:
+          DATABASE_URL: postgresql+psycopg://postgres:postgres@localhost:5432/govcareer
+        run: python -m pytest tests/test_notification_parser.py -q
+
+      - name: Run parser-to-evaluator integration tests
+        env:
+          DATABASE_URL: postgresql+psycopg://postgres:postgres@localhost:5432/govcareer
+        run: python -m pytest tests/test_eligibility_integration.py -q
+
+      - name: Run ORM smoke tests
+        env:
+          DATABASE_URL: postgresql+psycopg://postgres:postgres@localhost:5432/govcareer
+        run: python -m pytest tests/test_postgres_models.py -q
+
+      - name: Run job ingestion tests
+        env:
+          DATABASE_URL: postgresql+psycopg://postgres:postgres@localhost:5432/govcareer
+          JWT_SECRET: ci-test-secret-change-me
+        run: python -m pytest tests/test_job_ingestion.py -q
+
+      - name: Run document processing tests
+        env:
+          DATABASE_URL: postgresql+psycopg://postgres:postgres@localhost:5432/govcareer
+          JWT_SECRET: ci-test-secret-change-me
+        run: python -m pytest tests/test_document_processing.py -q
+
+      - name: Run official source tests
+        env:
+          DATABASE_URL: postgresql+psycopg://postgres:postgres@localhost:5432/govcareer
+          JWT_SECRET: ci-test-secret-change-me
+        run: python -m pytest tests/test_official_sources.py -q
+
+      - name: Run source discovery tests
+        env:
+          DATABASE_URL: postgresql+psycopg://postgres:postgres@localhost:5432/govcareer
+          JWT_SECRET: ci-test-secret-change-me
+        run: python -m pytest tests/test_source_discovery.py -q
+
+      - name: Run persisted eligibility service tests
+        env:
+          DATABASE_URL: postgresql+psycopg://postgres:postgres@localhost:5432/govcareer
+        run: python -m pytest tests/test_job_eligibility_service.py -q
+
+      - name: Run Alembic migration
+        env:
+          DATABASE_URL: postgresql+psycopg://postgres:postgres@localhost:5432/govcareer
+        run: alembic upgrade head
+
+      - name: Verify migration revision
+        env:
+          DATABASE_URL: postgresql+psycopg://postgres:postgres@localhost:5432/govcareer
+        run: alembic current
