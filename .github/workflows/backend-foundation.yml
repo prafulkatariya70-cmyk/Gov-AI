@@ -82,6 +82,12 @@ jobs:
           JWT_SECRET: ci-test-secret-change-me
         run: python -m pytest tests/test_document_processing.py -q
 
+      - name: Run official source tests
+        env:
+          DATABASE_URL: postgresql+psycopg://postgres:postgres@localhost:5432/govcareer
+          JWT_SECRET: ci-test-secret-change-me
+        run: python -m pytest tests/test_official_sources.py -q
+
       - name: Run source discovery tests
         env:
           DATABASE_URL: postgresql+psycopg://postgres:postgres@localhost:5432/govcareer
