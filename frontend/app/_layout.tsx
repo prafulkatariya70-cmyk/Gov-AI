@@ -5,6 +5,7 @@ import { LogBox } from "react-native";
 import { KeyboardProvider } from "react-native-keyboard-controller";
 import { ErrorBoundary } from "@/src/components/error-boundary";
 import { queryClient } from "@/src/query-client";
+import { AuthProvider } from "@/src/auth/AuthContext";
 
 // Disable logbox errors for seamless testing and preview
 LogBox.ignoreAllLogs(true);
