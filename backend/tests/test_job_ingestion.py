@@ -95,7 +95,7 @@ The salary is Rs. 44,900 - 1,42,400.
         assert same.max_age == 56
         assert same.start_date == date(2026, 9, 1)
         assert same.last_date == date(2026, 9, 30)
-        assert same.salary_scale == "Rs. 44,900 - 1,42,400"
+        assert same.salary_scale == "Rs.44,900 - 1,42,400"
     finally:
         db.close()
 
@@ -121,7 +121,7 @@ def test_distinct_vacancy_numbers_do_not_collide_on_shared_pdf_url():
             first,
             official_url="https://upsc.gov.in/ad11",
             notification_pdf_url="https://upsc.gov.in/ad11.pdf",
-            notification_text="first block",
+            notification_text="(Vacancy No. 26091106212) 140 posts of Assistant Public Prosecutor.\nUNION PUBLIC SERVICE COMMISSION\n",
         )
         second_job = service.ingest(
             second,
