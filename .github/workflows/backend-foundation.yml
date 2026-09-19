@@ -70,6 +70,12 @@ jobs:
           DATABASE_URL: postgresql+psycopg://postgres:postgres@localhost:5432/govcareer
         run: python -m pytest tests/test_postgres_models.py -q
 
+      - name: Run job ingestion tests
+        env:
+          DATABASE_URL: postgresql+psycopg://postgres:postgres@localhost:5432/govcareer
+          JWT_SECRET: ci-test-secret-change-me
+        run: python -m pytest tests/test_job_ingestion.py -q
+
       - name: Run persisted eligibility service tests
         env:
           DATABASE_URL: postgresql+psycopg://postgres:postgres@localhost:5432/govcareer
