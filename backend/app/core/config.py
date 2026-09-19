@@ -12,6 +12,9 @@ class Settings(BaseSettings):
     environment: str = "development"
     database_url: str = Field(..., validation_alias="DATABASE_URL")
     cors_origins: str = ""
+    jwt_secret: str = Field(..., validation_alias="JWT_SECRET")
+    jwt_algorithm: str = "HS256"
+    access_token_expire_minutes: int = Field(60 * 24 * 7, ge=5, le=60 * 24 * 30)
 
     model_config = SettingsConfigDict(
         env_file=".env",
