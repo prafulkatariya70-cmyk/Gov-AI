@@ -1,7 +1,7 @@
 from __future__ import annotations
 
 import re
-from dataclasses import dataclass
+from dataclasses import dataclass, field
 from datetime import date, datetime
 from typing import Optional
 
@@ -42,8 +42,8 @@ class ParsedNotification:
 
     application_start: ParsedField
     application_end: ParsedField
-    advertisement_number: ParsedField = None
-    vacancy_number: ParsedField = None
+    advertisement_number: ParsedField = field(default_factory=lambda: ParsedField(None))
+    vacancy_number: ParsedField = field(default_factory=lambda: ParsedField(None))
 
 
 class NotificationParser:
