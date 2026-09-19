@@ -67,6 +67,15 @@ class PersistedEligibilityService:
 
         return CandidateProfile(
             age=PersistedEligibilityService._calculate_age(profile.dob),
+            government_employee=profile.government_employee,
+            analogous_post=profile.analogous_post,
+            regular_service_years=profile.regular_service_years,
+            current_pay_level=profile.current_pay_level,
+            parent_cadre=profile.parent_cadre,
+            qualifying_examination=profile.qualifying_examination,
+            required_training=profile.required_training,
+            relevant_experience_years=profile.relevant_experience_years,
+            experience_areas=list(profile.experience_areas or []),
             qualification_text=qualification_text,
         )
 
