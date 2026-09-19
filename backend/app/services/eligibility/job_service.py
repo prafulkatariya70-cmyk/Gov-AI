@@ -4,10 +4,8 @@ from datetime import date
 from typing import Any
 from uuid import UUID
 
-from app.repositories.job_eligibility import (
-    JobEligibilityRepository,
-    UserProfileRepository,
-)
+from app.repositories.job_eligibility import JobEligibilityRepository
+from app.repositories.user_profiles import UserProfileRepository
 from app.services.documents.parsing.rules.models import (
     EligibilityRule,
     EligibilityRuleGroup,
