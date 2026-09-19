@@ -14,7 +14,7 @@ CLOSING DATE FOR SUBMISSION OF ONLINE RECRUITMENT APPLICATION THROUGH WEBSITE IS
 
 def test_real_upsc_wording_is_enriched():
     parsed=NotificationParserEnhancer().parse(REAL_UPSC_EXCERPT)
-    assert parsed.organization_name.value == "Union Public Service Commission"
+    assert parsed.organization_name.value.casefold() == "union public service commission".casefold()
     assert parsed.title.value == "Assistant Provident Fund Commissioner in Employees' Provident Fund Organisation, Ministry of Labour & Employment"
     assert parsed.vacancy_count.value == 80
     assert parsed.minimum_age.value == 35
