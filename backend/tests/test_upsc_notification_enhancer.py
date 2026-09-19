@@ -22,3 +22,24 @@ def test_real_upsc_wording_is_enriched():
     assert parsed.pay_level.value == "Level-10"
     assert parsed.application_start.value == date(2026,8,22)
     assert parsed.application_end.value == date(2026,9,11)
+
+
+def test_current_upsc_advertisement_11_app_wording_is_enriched():
+    text = """ADVERTISEMENT NO. 11/2026
+UNION PUBLIC SERVICE COMMISSION
+(Vacancy No. 26091106212) 140 posts of Assistant Public Prosecutor in Directorate of Prosecution, Home Department under Government of NCT of Delhi.
+PAY LEVEL-10 in the Pay Matrix.
+AGE: 35 years for UR/EWS, 38 years for OBC and 40 years for SC/ST.
+Degree in Law from a recognized University/Institute.
+Three years' experience at the Bar.
+ONLINE RECRUITMENT APPLICATIONS ARE INVITED FOR DIRECT RECRUITMENT BY SELECTION THROUGH WEBSITE https://upsconline.nic.in/ora/ FROM 12-09-2026.
+CLOSING DATE FOR SUBMISSION OF ONLINE RECRUITMENT APPLICATION THROUGH WEBSITE IS 1800 HRS ON 02-10-2026.
+"""
+    parsed = NotificationParserEnhancer().parse(text)
+    assert parsed.organization_name.value == "Union Public Service Commission"
+    assert parsed.title.value.startswith("Assistant Public Prosecutor")
+    assert parsed.vacancy_count.value == 140
+    assert parsed.minimum_age.value == 35
+    assert parsed.maximum_age.value == 40
+    assert parsed.application_start.value == date(2026, 9, 12)
+    assert parsed.application_end.value == date(2026, 10, 2)
