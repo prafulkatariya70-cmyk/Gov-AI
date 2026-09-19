@@ -10,7 +10,11 @@ class NotificationParserEnhancer:
     def parse(self,text: str)->ParsedNotification:
         parsed=self.parser.parse(text)
         normalized=text.replace("\u2018","'").replace("\u2019","'")
-        title=parsed.title; vacancy=parsed.vacancy_count; min_age=parsed.minimum_age; max_age=parsed.maximum_age; start=parsed.application_start; end=parsed.application_end; pay=parsed.pay_level
+        title=parsed.title; vacancy=parsed.vacancy_count; min_age=parsed.minimum_age; max_age=parsed.maximum_age; start=parsed.application_start; end=parsed.application_end; pay=parsed.pay_level; advertisement=parsed.advertisement_number; vacancy_number=parsed.vacancy_number
+        m=re.search(r"\\bAdvertisement\\s*(?:No\\.?|Number)\\s*[:#-]?\\s*(\\d{1,3})\\s*[-/]\\s*(\\d{4})\\b",normalized,re.I)
+        if not advertisement.value and m: advertisement=ParsedField(f"{m.group(1)}-{m.group(2)}",m.group(0),"high")
+        m=re.search(r"\\bVacancy\\s+No\\.?\\s*[:#-]?\\s*(\\d{8,14})\\b",normalized,re.I)
+        if not vacancy_number.value and m: vacancy_number=ParsedField(m.group(1),m.group(0),"high")
         m=re.search(r"(?:\b\w[\w -]*\s+)?vacancies?\s+for\s+the\s+posts?\s+of\s+([^\n.]+)",normalized,re.I)
         if not m:
             m=re.search(r"\b(?:recruitment|applications?)\b.{0,120}?\bposts?\s+of\s+([^\n.]+)",normalized,re.I|re.S)
@@ -38,4 +42,4 @@ class NotificationParserEnhancer:
             except ValueError: pass
         m=re.search(r"\bLevel[- ]\s*(\d+)\s+in\s+the\s+Pay\s+Matrix",normalized,re.I)
         if not pay.value and m: pay=ParsedField(f"Level-{m.group(1)}",m.group(0),"high")
-        return replace(parsed,title=title,vacancy_count=vacancy,minimum_age=min_age,maximum_age=max_age,application_start=start,application_end=end,pay_level=pay)
+        return replace(parsed,title=title,vacancy_count=vacancy,minimum_age=min_age,maximum_age=max_age,application_start=start,application_end=end,pay_level=pay,advertisement_number=advertisement,vacancy_number=vacancy_number)
