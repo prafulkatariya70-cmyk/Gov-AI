@@ -52,3 +52,49 @@ def test_ingestion_persists_job_source_and_eligibility_idempotently():
         assert db.query(JobEligibility).count() == 1
     finally:
         db.close()
+
+
+def test_partial_reingestion_does_not_erase_verified_fields():
+    engine = create_engine("sqlite+pysqlite:///:memory:")
+    Base.metadata.create_all(engine)
+    db = Session(engine)
+    try:
+        parser = NotificationParser()
+        service = JobIngestionService(db)
+
+        complete = parser.parse(
+            NOTIFICATION
+            + """
+Applications are invited from 01.09.2026 to 30.09.2026.
+The salary is Rs. 44,900 - 1,42,400.
+"""
+        )
+        job = service.ingest(
+            complete,
+            official_url="https://ssc.gov.in/notice/accounts-officer",
+            notification_pdf_url="https://ssc.gov.in/notice/accounts-officer.pdf",
+            notification_text=NOTIFICATION,
+        )
+
+        partial = parser.parse(
+            """
+            Staff Selection Commission (HQ)
+            Recruitment to the post of Accounts Officer.
+            Applications are invited for 4 posts.
+            """
+        )
+        same = service.ingest(
+            partial,
+            official_url="https://ssc.gov.in/notice/accounts-officer",
+            notification_pdf_url="https://ssc.gov.in/notice/accounts-officer.pdf",
+            notification_text="partial-parser-pass",
+        )
+
+        assert same.id == job.id
+        assert same.total_vacancies == 4
+        assert same.max_age == 56
+        assert same.start_date == date(2026, 9, 1)
+        assert same.last_date == date(2026, 9, 30)
+        assert same.salary_scale == "Rs. 44,900 - 1,42,400"
+    finally:
+        db.close()
