@@ -34,7 +34,7 @@ def test_processing_pipeline_extracts_parses_and_persists():
         service = NotificationProcessingService(db, fetcher=FakeFetcher())
         result = service.process(
             notification_pdf_url="https://ssc.gov.in/accounts-officer.pdf",
-            official_apply_url="https://ssc.gov.in/accounts-officer/apply",
+            official_source_url="https://ssc.gov.in/accounts-officer",
         )
         assert result.extraction_method == "native_pdf_text"
         assert result.page_count == 1
