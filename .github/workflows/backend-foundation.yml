@@ -14,6 +14,7 @@ jobs:
     env:
       DATABASE_URL: postgresql+psycopg://postgres:postgres@localhost:5432/govcareer
       JWT_SECRET: ci-test-secret-change-me
+      INGESTION_SYNC_TOKEN: ci-ingestion-secret-01234567890123456789
     services:
       postgres:
         image: postgres:18
@@ -61,6 +62,9 @@ jobs:
 
       - name: Run official sync API tests
         run: python -m pytest tests/test_sync_api.py -q
+
+      - name: Run scheduled ingestion API security tests
+        run: python -m pytest tests/test_scheduled_ingestion_api.py -q
 
       - name: Run notification parser regression tests
         run: python -m pytest tests/test_notification_parser.py -q
