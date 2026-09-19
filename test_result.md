@@ -190,3 +190,34 @@ test_plan:
 agent_communication:
 - agent: "main"
     message: "CI run #86 exposed a test-fixture defect, not an application defect: the new mapping test seeded only DOB, so the structured profile fields were correctly read as NULL. The fixture is now corrected; rerun the full gate before proceeding."
+
+
+backend:
+  - task: "JWT authentication foundation"
+    implemented: true
+    working: "NA"
+    file: "backend/app/api/routes/auth.py"
+    stuck_count: 0
+    priority: "high"
+    needs_retesting: true
+    status_history:
+      - working: "NA"
+        agent: "main"
+        comment: "Added registration, login, authenticated /me, bcrypt password hashing, JWT access tokens, and authenticated-user dependency. Existing User.password_hash is reused; no migration required."
+
+metadata:
+  test_sequence: 8
+
+test_plan:
+  current_focus:
+    - "Verify authentication route registration"
+    - "Verify password hashing and JWT round trip"
+    - "Verify registration, login, /me, duplicate registration, and invalid credentials"
+    - "Run full backend foundation regression suite"
+  stuck_tasks: []
+  test_all: true
+  test_priority: "high_first"
+
+agent_communication:
+- agent: "main"
+  message: "Authentication is intentionally built before personalized eligibility. No demo user or unauthenticated candidate identity is introduced."
