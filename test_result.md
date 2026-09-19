@@ -210,3 +210,8 @@ agent_communication:
 - Verify the route seeds official sources and invokes one bounded ingestion cycle.
 - Verify the frontend Sync Live action targets the production sync endpoint.
 - Run the full backend foundation workflow.
+
+
+## CI coverage update
+- Application tracker API tests are now explicitly executed in the backend foundation workflow.
+- Official sync API tests are now explicitly executed in the backend foundation workflow.
