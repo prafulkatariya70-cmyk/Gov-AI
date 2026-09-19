@@ -254,3 +254,36 @@ test_plan:
 agent_communication:
 - agent: "main"
   message: "Before adding the profile API, the auth gate must be executed. The workflow now explicitly runs test_auth.py; no personalized endpoint work will be started until this gate passes."
+
+
+# Authenticated profile API update
+backend:
+  - task: "Authenticated user profile API"
+    implemented: true
+    working: "NA"
+    file: "backend/app/api/routes/profile.py"
+    stuck_count: 0
+    priority: "high"
+    needs_retesting: true
+    status_history:
+      - working: "NA"
+        agent: "main"
+        comment: "Added authenticated GET /api/v1/profile and idempotent PUT /api/v1/profile. Profile records are resolved exclusively from the authenticated user ID; no client-supplied user ID is accepted. Structured eligibility fields are persisted through the existing UserProfile model."
+
+metadata:
+  test_sequence: 10
+
+test_plan:
+  current_focus:
+    - "Run authentication tests including the newly explicit CI step"
+    - "Run authenticated profile GET/PUT tests"
+    - "Verify profile data is scoped to the authenticated user"
+    - "Run full backend foundation regression suite"
+    - "Verify Alembic upgrade remains at 0003"
+  stuck_tasks: []
+  test_all: true
+  test_priority: "high_first"
+
+agent_communication:
+- agent: "main"
+  message: "Profile API is implemented only after the auth foundation was wired into CI. The next verification must cover auth and profile together before personalized eligibility is exposed."
