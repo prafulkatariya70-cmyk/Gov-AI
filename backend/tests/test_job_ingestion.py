@@ -98,3 +98,42 @@ The salary is Rs. 44,900 - 1,42,400.
         assert same.salary_scale == "Rs. 44,900 - 1,42,400"
     finally:
         db.close()
+
+
+
+def test_distinct_vacancy_numbers_do_not_collide_on_shared_pdf_url():
+    engine = create_engine("sqlite+pysqlite:///:memory:")
+    Base.metadata.create_all(engine)
+    db = Session(engine)
+    try:
+        parser = NotificationParser()
+        service = JobIngestionService(db)
+        first = parser.parse("""
+        UNION PUBLIC SERVICE COMMISSION
+        (Vacancy No. 26091106212) 140 posts of Assistant Public Prosecutor.
+        """)
+        second = parser.parse("""
+        UNION PUBLIC SERVICE COMMISSION
+        (Vacancy No. 26091106213) 20 posts of Assistant Director.
+        """)
+
+        first_job = service.ingest(
+            first,
+            official_url="https://upsc.gov.in/ad11",
+            notification_pdf_url="https://upsc.gov.in/ad11.pdf",
+            notification_text="first block",
+        )
+        second_job = service.ingest(
+            second,
+            official_url="https://upsc.gov.in/ad11",
+            notification_pdf_url="https://upsc.gov.in/ad11.pdf",
+            notification_text="second block",
+        )
+
+        assert first_job.id != second_job.id
+        assert first_job.vacancy_number == "26091106212"
+        assert second_job.vacancy_number == "26091106213"
+        assert db.query(Job).count() == 2
+        assert db.query(JobSource).count() == 2
+    finally:
+        db.close()
