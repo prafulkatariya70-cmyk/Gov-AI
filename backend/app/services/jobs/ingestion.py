@@ -48,6 +48,10 @@ class JobIngestionService:
                 source = self.db.query(JobSource).filter(JobSource.job_id == job.id).one_or_none()
                 if source is not None:
                     return source
+            # When a vacancy number is present but no matching job exists,
+            # do not fall back to a shared advertisement/PDF URL. Those URLs
+            # can legitimately be identical across multiple posts.
+            return None
 
         if official_url:
             source = self.db.query(JobSource).filter(JobSource.official_url == official_url).one_or_none()
