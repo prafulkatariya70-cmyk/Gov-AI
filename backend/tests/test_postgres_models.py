@@ -53,3 +53,7 @@ def test_production_api_routes_are_registered():
     assert "/api/v1/jobs" in paths
     assert "/api/v1/jobs/{identifier}" in paths
     assert "/api/v1/jobs/{identifier}/eligibility" in paths
+    assert "/api/v1/auth/register" in paths
+    assert "/api/v1/auth/login" in paths
+    assert "/api/v1/auth/me" in paths
+    assert "/api/v1/profile" in paths
