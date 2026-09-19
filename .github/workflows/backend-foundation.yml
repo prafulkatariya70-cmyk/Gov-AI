@@ -49,6 +49,12 @@ jobs:
           DATABASE_URL: postgresql+psycopg://postgres:postgres@localhost:5432/govcareer
         run: python -m pytest tests/test_eligibility_engine.py -q
 
+      - name: Run authentication tests
+        env:
+          DATABASE_URL: postgresql+psycopg://postgres:postgres@localhost:5432/govcareer
+          JWT_SECRET: ci-test-secret-change-me
+        run: python -m pytest tests/test_auth.py -q
+
       - name: Run notification parser regression tests
         env:
           DATABASE_URL: postgresql+psycopg://postgres:postgres@localhost:5432/govcareer
