@@ -92,6 +92,28 @@
 
 user_problem_statement: "Productionize GovCareerAI foundation without breaking the existing working prototype."
 backend:
+  - task: "Structured eligibility profile fields"
+    implemented: true
+    working: "NA"
+    file: "backend/app/models/user_profile.py"
+    stuck_count: 0
+    priority: "high"
+    needs_retesting: true
+    status_history:
+      - working: "NA"
+        agent: "main"
+        comment: "Added persisted profile fields required by the evaluator: government service, analogous post, service years, pay level, parent cadre, qualifying examination, training, relevant experience, and experience areas."
+  - task: "Eligibility profile migration"
+    implemented: true
+    working: "NA"
+    file: "backend/alembic/versions/0003_profile_eligibility_fields.py"
+    stuck_count: 0
+    priority: "high"
+    needs_retesting: true
+    status_history:
+      - working: "NA"
+        agent: "main"
+        comment: "Added Alembic revision 0003 after the existing 0002 head."
   - task: "Persisted eligibility evaluation service"
     implemented: true
     working: "NA"
@@ -100,20 +122,9 @@ backend:
     priority: "high"
     needs_retesting: true
     status_history:
-      - working: "NA"
+      - working: true
         agent: "main"
-        comment: "Added a production service that loads a PostgreSQL job eligibility record and user profile, reconstructs normalized rule trees, maps profile data into the existing CandidateProfile contract, and delegates decisions to the existing evaluator without duplicating business rules."
-  - task: "Eligibility persistence repository"
-    implemented: true
-    working: "NA"
-    file: "backend/app/repositories/job_eligibility.py"
-    stuck_count: 0
-    priority: "high"
-    needs_retesting: true
-    status_history:
-      - working: "NA"
-        agent: "main"
-        comment: "Added repository lookup for job eligibility and user profile records using SQLAlchemy."
+        comment: "Foundation CI run #74 passed the initial persisted service tests. This slice now maps all structured profile inputs into CandidateProfile and requires migration validation."
   - task: "Production eligibility regression tests"
     implemented: true
     working: "NA"
@@ -124,68 +135,25 @@ backend:
     status_history:
       - working: "NA"
         agent: "main"
-        comment: "Added deterministic SQLite-backed tests for persisted rule reconstruction, eligible age evaluation, missing-profile data producing NEEDS_REVIEW, and missing job eligibility handling."
-  - task: "PostgreSQL SQLAlchemy ORM foundation"
-    implemented: true
-    working: true
-    file: "backend/app/models/"
-    stuck_count: 0
-    priority: "high"
-    needs_retesting: false
-    status_history:
-      - working: true
-        agent: "main"
-        comment: "Foundation gate is green in GitHub Actions, including ORM smoke and Alembic verification."
-  - task: "Alembic initial migration"
-    implemented: true
-    working: true
-    file: "backend/alembic/versions/0001_initial_schema.py"
-    stuck_count: 0
-    priority: "high"
-    needs_retesting: false
-    status_history:
-      - working: true
-        agent: "main"
-        comment: "Alembic upgrade reached head 0002 in the latest green foundation CI run."
-  - task: "Eligibility intelligence integration boundary"
-    implemented: true
-    working: true
-    file: "backend/app/services/eligibility/"
-    stuck_count: 0
-    priority: "high"
-    needs_retesting: false
-    status_history:
-      - working: true
-        agent: "main"
-        comment: "Existing parser-normalizer-evaluator boundary remains green and is reused by the persisted eligibility service."
-  - task: "Notification parser integration"
-    implemented: true
-    working: true
-    file: "backend/app/services/documents/parsing/notification_parser.py"
-    stuck_count: 0
-    priority: "high"
-    needs_retesting: false
-    status_history:
-      - working: true
-        agent: "main"
-        comment: "Full verified parser remains unchanged by this work."
+        comment: "Extended tests to verify all structured candidate fields reach the evaluator contract."
 frontend: []
 
 metadata:
   created_by: "main_agent"
   version: "1.0"
-  test_sequence: 5
+  test_sequence: 6
   run_ui: false
 
 test_plan:
   current_focus:
-    - "Run persisted eligibility service regression tests"
-    - "Run full backend foundation suite"
-    - "Verify Alembic head remains 0002"
+    - "Run persisted eligibility tests with full candidate mapping"
+    - "Run ORM smoke tests"
+    - "Run Alembic upgrade through revision 0003"
+    - "Verify migration current reports 0003 as head"
   stuck_tasks: []
   test_all: false
   test_priority: "high_first"
 
 agent_communication:
   - agent: "main"
-    message: "Next production slice connects PostgreSQL-stored eligibility rules and user profiles to the existing evaluator. No business-rule duplication and no Emergent credits used. Testing agent tooling is unavailable, so GitHub Actions is the validation gate."
+    message: "Foundation run #74 is green. Next slice closes the gap between the evaluator's full CandidateProfile contract and the persisted user profile, then validates migration 0003. No Emergent credits used."
