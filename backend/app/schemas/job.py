@@ -1,7 +1,7 @@
 from datetime import datetime
 from uuid import UUID
 
-from pydantic import BaseModel
+from pydantic import BaseModel, Field
 
 
 class JobEligibilityResponse(BaseModel):
@@ -19,10 +19,10 @@ class JobEligibilityResponse(BaseModel):
 
 class EligibilityDecisionResponse(BaseModel):
     status: str
-    reasons: list[str] = []
-    failed_requirements: list[str] = []
-    unknown_requirements: list[str] = []
-    passed_requirements: list[str] = []
-    evidence: list[dict] = []
+    reasons: list[str] = Field(default_factory=list)
+    failed_requirements: list[str] = Field(default_factory=list)
+    unknown_requirements: list[str] = Field(default_factory=list)
+    passed_requirements: list[str] = Field(default_factory=list)
+    evidence: list[dict] = Field(default_factory=list)
     score: float | None = None
     confidence: str | None = None
