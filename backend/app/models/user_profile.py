@@ -1,7 +1,7 @@
 import uuid
 from datetime import date, datetime
 
-from sqlalchemy import Date, DateTime, Integer, String, Text, ForeignKey
+from sqlalchemy import Boolean, Date, DateTime, Float, Integer, JSON, String, Text, ForeignKey
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
 from app.core.database import Base
@@ -24,6 +24,17 @@ class UserProfile(Base):
     percentage_or_cgpa: Mapped[str | None] = mapped_column(String(30), nullable=True)
     additional_certs: Mapped[str | None] = mapped_column(Text, nullable=True)
     height_cm: Mapped[int | None] = mapped_column(Integer, nullable=True)
+
+    # Structured eligibility inputs used by the production evaluator.
+    government_employee: Mapped[bool | None] = mapped_column(Boolean, nullable=True)
+    analogous_post: Mapped[bool | None] = mapped_column(Boolean, nullable=True)
+    regular_service_years: Mapped[float | None] = mapped_column(Float, nullable=True)
+    current_pay_level: Mapped[float | None] = mapped_column(Float, nullable=True)
+    parent_cadre: Mapped[bool | None] = mapped_column(Boolean, nullable=True)
+    qualifying_examination: Mapped[bool | None] = mapped_column(Boolean, nullable=True)
+    required_training: Mapped[bool | None] = mapped_column(Boolean, nullable=True)
+    relevant_experience_years: Mapped[float | None] = mapped_column(Float, nullable=True)
+    experience_areas: Mapped[list | None] = mapped_column(JSON, nullable=True)
     preferred_categories: Mapped[str | None] = mapped_column(Text, nullable=True)
     preferred_states: Mapped[str | None] = mapped_column(Text, nullable=True)
     streak_count: Mapped[int] = mapped_column(Integer, default=0, nullable=False)
