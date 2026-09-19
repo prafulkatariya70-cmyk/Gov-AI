@@ -143,7 +143,7 @@ export const api = {
     status?: string;
     page?: number;
     page_size?: number;
-  }): Promise<{ count: number; page: number; page_size: number; jobs: Job[] }> {
+  }): Promise<{ count: number; page: number; page_size: number; jobs: Job[]; candidate_summary: any }> {
     const searchParams = new URLSearchParams();
     if (params?.search) searchParams.append("search", params.search);
     if (params?.category) searchParams.append("category", params.category);
