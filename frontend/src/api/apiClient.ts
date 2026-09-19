@@ -152,7 +152,7 @@ export const api = {
     if (params?.qualification) searchParams.append("qualification", params.qualification);
     if (params?.status) searchParams.append("status", params.status);
     if (params?.page) searchParams.append("page", String(params.page));
-    if (params?.page_size) searchParams.append("page_size", String(params.page_size));
+    if (params?.page_size) searchParams.append("page_size", String(params.page_size));\n    // Legacy UI filters are accepted by the client contract; the production API\n    // currently ignores unsupported recommendation flags.\n    void params?.sort_by;\n    void params?.is_featured;\n    void params?.is_new;
 
     const query = searchParams.toString();
     const response = await request<{
