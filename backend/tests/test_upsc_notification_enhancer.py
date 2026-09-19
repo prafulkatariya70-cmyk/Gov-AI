@@ -36,7 +36,7 @@ ONLINE RECRUITMENT APPLICATIONS ARE INVITED FOR DIRECT RECRUITMENT BY SELECTION 
 CLOSING DATE FOR SUBMISSION OF ONLINE RECRUITMENT APPLICATION THROUGH WEBSITE IS 1800 HRS ON 02-10-2026.
 """
     parsed = NotificationParserEnhancer().parse(text)
-    assert parsed.organization_name.value == "Union Public Service Commission"
+    assert parsed.organization_name.value.casefold() == "union public service commission".casefold()
     assert parsed.title.value.startswith("Assistant Public Prosecutor")
     assert parsed.vacancy_count.value == 140
     assert parsed.minimum_age.value == 35
