@@ -97,3 +97,21 @@ def test_missing_eligibility_rules_requires_review():
 def test_age_calculation_handles_birthday_boundary():
     assert PersistedEligibilityService._calculate_age(date(2000, 9, 20), date(2026, 9, 19)) == 25
     assert PersistedEligibilityService._calculate_age(date(2000, 9, 19), date(2026, 9, 19)) == 26
+
+
+def test_full_profile_fields_reach_candidate_contract():
+    with _session() as session:
+        user = _seed_user(session, date(2000, 1, 1))
+        profile = session.get(UserProfile, user.id) if False else None
+        stored = session.query(UserProfile).filter_by(user_id=user.id).one()
+        candidate = PersistedEligibilityService._to_candidate(stored)
+
+        assert candidate.government_employee is True
+        assert candidate.analogous_post is True
+        assert candidate.regular_service_years == 8
+        assert candidate.current_pay_level == 7
+        assert candidate.parent_cadre is True
+        assert candidate.qualifying_examination is True
+        assert candidate.required_training is False
+        assert candidate.relevant_experience_years == 5
+        assert candidate.experience_areas == ["Cash", "Accounts", "Budget"]
