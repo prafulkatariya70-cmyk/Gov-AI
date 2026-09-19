@@ -21,7 +21,7 @@ def test_upcoming_when_application_start_is_in_future():
 def test_open_when_application_window_contains_today():
     result = derive_job_status(
         start_date=date(2026, 9, 10),
-        last_date=date(2026, 9, 22),
+        last_date=date(2026, 9, 25),
         today=TODAY,
     )
     assert result.status == OPEN
