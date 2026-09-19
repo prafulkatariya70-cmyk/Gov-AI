@@ -102,7 +102,6 @@ def test_age_calculation_handles_birthday_boundary():
 def test_full_profile_fields_reach_candidate_contract():
     with _session() as session:
         user = _seed_user(session, date(2000, 1, 1))
-        profile = session.get(UserProfile, user.id) if False else None
         stored = session.query(UserProfile).filter_by(user_id=user.id).one()
         candidate = PersistedEligibilityService._to_candidate(stored)
 
