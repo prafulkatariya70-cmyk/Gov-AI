@@ -203,3 +203,10 @@ agent_communication:
 - Verify tracker records are scoped to the authenticated user and linked to real jobs.
 - Verify frontend tracker API methods use the production /api/v1/tracker endpoints.
 - Run the full backend foundation workflow.
+
+
+## Live sync verification plan
+- Verify POST /api/v1/sync requires authentication.
+- Verify the route seeds official sources and invokes one bounded ingestion cycle.
+- Verify the frontend Sync Live action targets the production sync endpoint.
+- Run the full backend foundation workflow.
