@@ -11,9 +11,9 @@ class NotificationParserEnhancer:
         parsed=self.parser.parse(text)
         normalized=text.replace("\u2018","'").replace("\u2019","'")
         title=parsed.title; vacancy=parsed.vacancy_count; min_age=parsed.minimum_age; max_age=parsed.maximum_age; start=parsed.application_start; end=parsed.application_end; pay=parsed.pay_level; advertisement=parsed.advertisement_number; vacancy_number=parsed.vacancy_number
-        m=re.search(r"\\bAdvertisement\\s*(?:No\\.?|Number)\\s*[:#-]?\\s*(\\d{1,3})\\s*[-/]\\s*(\\d{4})\\b",normalized,re.I)
+        m=re.search(r"\bAdvertisement\\s*(?:No\\.?|Number)\\s*[:#-]?\\s*(\\d{1,3})\\s*[-/]\\s*(\\d{4})\\b",normalized,re.I)
         if not advertisement.value and m: advertisement=ParsedField(f"{m.group(1)}-{m.group(2)}",m.group(0),"high")
-        m=re.search(r"\\bVacancy\\s+No\\.?\\s*[:#-]?\\s*(\\d{8,14})\\b",normalized,re.I)
+        m=re.search(r"\bVacancy\\s+No\\.?\\s*[:#-]?\\s*(\\d{8,14})\\b",normalized,re.I)
         if not vacancy_number.value and m: vacancy_number=ParsedField(m.group(1),m.group(0),"high")
         m=re.search(r"(?:\b\w[\w -]*\s+)?vacancies?\s+for\s+the\s+posts?\s+of\s+([^\n.]+)",normalized,re.I)
         if not m:
