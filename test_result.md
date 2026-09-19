@@ -589,3 +589,47 @@ test_plan:
 agent_communication:
 - agent: "main"
   message: "The real-notification check exposed a parser vocabulary gap before production ingestion. The fix is intentionally narrow: preserve the proven parser and enrich only documented UPSC-style vacancy/title/age/date/pay patterns, with evidence and conservative confidence."
+
+
+# Job lifecycle status hardening update
+backend:
+  - task: "Deterministic job lifecycle status"
+    implemented: true
+    working: "NA"
+    file: "backend/app/services/jobs/status.py"
+    stuck_count: 0
+    priority: "high"
+    needs_retesting: true
+    status_history:
+      - working: "NA"
+        agent: "main"
+        comment: "Added deterministic UPCOMING/OPEN/CLOSED/NO_DEADLINE derivation from application dates, a three-day closing-soon flag, new-today handling from notification date, and invalid-window validation. Ingestion now refreshes lifecycle flags instead of hard-coding every imported job as Open/new."
+  - task: "Job API response schema integrity"
+    implemented: true
+    working: "NA"
+    file: "backend/app/schemas/job.py"
+    stuck_count: 0
+    priority: "high"
+    needs_retesting: true
+    status_history:
+      - working: "NA"
+        agent: "main"
+        comment: "Restored complete JobSummary and JobListResponse models with lifecycle fields and SQLAlchemy from_attributes support so the production jobs route has a valid response contract."
+
+metadata:
+  test_sequence: 20
+
+test_plan:
+  current_focus:
+    - "Run deterministic job lifecycle status tests"
+    - "Run job ingestion idempotency and status regression"
+    - "Run jobs API and ORM smoke tests"
+    - "Run full parser/normalizer/evaluator/persistence regression suite"
+    - "Run Alembic upgrade through 0005"
+  stuck_tasks: []
+  test_all: true
+  test_priority: "high_first"
+
+agent_communication:
+- agent: "main"
+  message: "This slice removes a production-critical hard-coded Open status. The lifecycle is now derived from actual application dates, so expired notifications such as the inspected UPSC Advertisement 52/2026 will not be surfaced as Open. The API schema was also restored to match the jobs route contract before verification."
