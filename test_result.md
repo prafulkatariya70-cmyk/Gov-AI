@@ -129,3 +129,33 @@ test_plan:
 agent_communication:
 - agent: "main"
   message: "Run #248 passed earlier suites and failed only on two organization-casing expectations. The parser preserves official source casing, so the regression should validate semantic identity rather than presentation casing."
+
+
+## Production API contract coverage - Pre-Test State
+backend:
+  - task: "Core FastAPI contract coverage for health, jobs, job detail, and eligibility requirements"
+    implemented: true
+    working: "NA"
+    file: "backend/tests/test_api_contract.py"
+    stuck_count: 0
+    priority: "high"
+    needs_retesting: true
+    status_history:
+      - working: "NA"
+        agent: "main"
+        comment: "Added isolated TestClient coverage for the production /api/v1 contract, including health, filtered job listing, job detail, persisted eligibility requirements, and 404 behavior. No production route behavior was changed."
+metadata:
+  test_sequence: 11
+
+test_plan:
+  current_focus:
+    - "Run core production API contract tests"
+    - "Run full backend foundation verification"
+    - "Verify Alembic remains at head"
+  stuck_tasks: []
+  test_all: true
+  test_priority: "high_first"
+
+agent_communication:
+- agent: "main"
+  message: "API contract coverage is now added before touching frontend integration. The goal is to lock the production /api/v1 behavior with isolated tests before changing the client contract."
