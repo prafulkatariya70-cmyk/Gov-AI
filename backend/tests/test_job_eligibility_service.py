@@ -41,7 +41,20 @@ def _seed_user(session: Session, dob: date | None):
     user = User(email=f"test-{uuid4().hex}@example.com")
     session.add(user)
     session.flush()
-    session.add(UserProfile(user_id=user.id, full_name="Test Candidate", dob=dob))
+    session.add(UserProfile(
+        user_id=user.id,
+        full_name="Test Candidate",
+        dob=dob,
+        government_employee=True,
+        analogous_post=True,
+        regular_service_years=8,
+        current_pay_level=7,
+        parent_cadre=True,
+        qualifying_examination=True,
+        required_training=False,
+        relevant_experience_years=5,
+        experience_areas=["Cash", "Accounts", "Budget"],
+    ))
     session.flush()
     return user
 
