@@ -321,3 +321,36 @@ test_plan:
 agent_communication:
 - agent: "main"
   message: "The personalized eligibility endpoint now completes the authenticated request-time path. It does not parse PDFs during requests; it evaluates only persisted normalized rules, preserving the production separation between ingestion and evaluation."
+
+
+# Real job ingestion foundation update
+backend:
+  - task: "Parsed notification to PostgreSQL job ingestion"
+    implemented: true
+    working: "NA"
+    file: "backend/app/services/jobs/ingestion.py"
+    stuck_count: 0
+    priority: "high"
+    needs_retesting: true
+    status_history:
+      - working: "NA"
+        agent: "main"
+        comment: "Added deterministic ingestion of already-parsed official notifications into jobs, job_sources, and job_eligibility. Ingestion records official source URLs, content hashes, normalized eligibility, core job fields, and is idempotent for repeated processing of the same source/content."
+
+metadata:
+  test_sequence: 12
+
+test_plan:
+  current_focus:
+    - "Run job ingestion idempotency test"
+    - "Run authentication and profile API tests"
+    - "Run personalized eligibility API test"
+    - "Run parser, normalizer, evaluator and persistence regression tests"
+    - "Run Alembic upgrade through 0003"
+  stuck_tasks: []
+  test_all: true
+  test_priority: "high_first"
+
+agent_communication:
+- agent: "main"
+  message: "The ingestion slice deliberately stops at parsed notification input. Network retrieval, PDF extraction/OCR, source discovery and scheduling remain separate concerns so ingestion can be tested deterministically before introducing external-source automation."
