@@ -130,3 +130,47 @@ def test_job_detail_and_eligibility_requirements_api_contract():
     finally:
         app.dependency_overrides.clear()
         session.close()
+
+
+def test_authenticated_job_eligibility_api_contract():
+    session = _session()
+
+    def override_db():
+        yield session
+
+    app.dependency_overrides[get_db] = override_db
+    client = TestClient(app)
+
+    try:
+        job = _seed_job(session)
+        register = client.post(
+            "/api/v1/auth/register",
+            json={"email": "eligibility@example.com", "password": "SecurePassword123!"},
+        )
+        assert register.status_code == 201
+        token = register.json()["access_token"]
+        headers = {"Authorization": f"Bearer {token}"}
+
+        profile = client.put(
+            "/api/v1/profile",
+            json={
+                "full_name": "Eligibility Candidate",
+                "dob": "2005-01-29",
+                "qualification": "Degree",
+            },
+            headers=headers,
+        )
+        assert profile.status_code == 200
+
+        decision = client.get(
+            f"/api/v1/jobs/{job.slug}/eligibility/me",
+            headers=headers,
+        )
+        assert decision.status_code == 200
+        body = decision.json()
+        assert body["status"] in {"ELIGIBLE", "NEEDS_REVIEW", "NOT_ELIGIBLE"}
+        assert "reasons" in body
+        assert "evidence" in body
+    finally:
+        app.dependency_overrides.clear()
+        session.close()
