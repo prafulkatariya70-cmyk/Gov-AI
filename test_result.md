@@ -354,3 +354,36 @@ test_plan:
 agent_communication:
 - agent: "main"
   message: "The ingestion slice deliberately stops at parsed notification input. Network retrieval, PDF extraction/OCR, source discovery and scheduling remain separate concerns so ingestion can be tested deterministically before introducing external-source automation."
+
+
+# Document processing pipeline update
+backend:
+  - task: "Official PDF fetch, extraction, parsing and ingestion pipeline"
+    implemented: true
+    working: "NA"
+    file: "backend/app/services/documents/processing.py"
+    stuck_count: 0
+    priority: "high"
+    needs_retesting: true
+    status_history:
+      - working: "NA"
+        agent: "main"
+        comment: "Added bounded HTTP(S) document fetching, native PDF text extraction with OCR fallback, and an orchestration service that passes extracted notification text through the proven parser and idempotent PostgreSQL ingestion service. Network retrieval remains outside request-time eligibility evaluation."
+
+metadata:
+  test_sequence: 13
+
+test_plan:
+  current_focus:
+    - "Run deterministic PDF processing pipeline test"
+    - "Run job ingestion idempotency test"
+    - "Run authentication, profile and personalized eligibility API tests"
+    - "Run parser/normalizer/evaluator/persistence regression tests"
+    - "Run Alembic upgrade through 0003"
+  stuck_tasks: []
+  test_all: true
+  test_priority: "high_first"
+
+agent_communication:
+- agent: "main"
+  message: "The document pipeline is intentionally deterministic at the orchestration boundary: CI uses an in-memory generated PDF and a fake fetcher, while production can supply official notification URLs. OCR is a fallback, not the default path when native PDF text exists."
