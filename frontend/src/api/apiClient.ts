@@ -192,7 +192,7 @@ export const api = {
     );
   },
 
-  async getTracker(): Promise<{ saved: any[]; applied: any[] }> {\n    return request<{ saved: any[]; applied: any[] }>("/tracker");\n  },\n\n  async updateTrackerItem(payload: { job_id: string; status: string; application_number?: string; roll_number?: string; exam_center?: string; applied_date?: string; exam_date?: string; notes?: string; reminder_enabled?: boolean }) {\n    return request<any>("/tracker", { method: "PUT", body: JSON.stringify(payload) });\n  },\n\n  async removeFromTracker(jobId: string): Promise<void> {\n    await request<void>("/tracker/" + encodeURIComponent(jobId), { method: "DELETE" });\n  },\n\n  async getProfile(): Promise<CandidateProfile> {
+  async triggerJobSync(): Promise<{ message: string; sources_checked: number; notifications_queued: number; notifications_processed: number }> {\n    return request("/sync", { method: "POST" });\n  },\n\n  async getTracker(): Promise<{ saved: any[]; applied: any[] }> {\n    return request<{ saved: any[]; applied: any[] }>("/tracker");\n  },\n\n  async updateTrackerItem(payload: { job_id: string; status: string; application_number?: string; roll_number?: string; exam_center?: string; applied_date?: string; exam_date?: string; notes?: string; reminder_enabled?: boolean }) {\n    return request<any>("/tracker", { method: "PUT", body: JSON.stringify(payload) });\n  },\n\n  async removeFromTracker(jobId: string): Promise<void> {\n    await request<void>("/tracker/" + encodeURIComponent(jobId), { method: "DELETE" });\n  },\n\n  async getProfile(): Promise<CandidateProfile> {
     const profile = await request<any>("/profile");
     return {
       ...profile,
