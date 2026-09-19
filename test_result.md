@@ -189,3 +189,10 @@ test_plan:
 agent_communication:
 - agent: "main"
   message: "The API contract tests existed but were not yet part of CI. The workflow is now updated to execute them before continuing the existing parser/ingestion/migration verification sequence."
+
+
+## Eligibility UI integration verification plan
+- Verify authenticated job-detail requests call the persisted /eligibility/me endpoint.
+- Verify the UI renders ELIGIBLE, NEEDS REVIEW, or NOT ELIGIBLE from backend status.
+- Verify reasons, passed requirements, failed requirements, unknown requirements, and evidence are rendered without a client-side match-score fallback.
+- Run the authenticated eligibility API contract test and the full backend foundation workflow.
