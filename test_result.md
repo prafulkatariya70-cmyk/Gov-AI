@@ -159,3 +159,33 @@ test_plan:
 agent_communication:
 - agent: "main"
   message: "API contract coverage is now added before touching frontend integration. The goal is to lock the production /api/v1 behavior with isolated tests before changing the client contract."
+
+
+## CI API contract execution - Pre-Test State
+backend:
+  - task: "Execute production API contract tests in Backend Foundation Verification"
+    implemented: true
+    working: "NA"
+    file: "backend/tests/test_api_contract.py"
+    stuck_count: 0
+    priority: "high"
+    needs_retesting: true
+    status_history:
+      - working: "NA"
+        agent: "main"
+        comment: "Added the API contract test suite to the CI workflow so health, jobs, job detail, and persisted eligibility endpoints are actually executed on every foundation verification run."
+metadata:
+  test_sequence: 12
+
+test_plan:
+  current_focus:
+    - "Run production API contract tests in CI"
+    - "Verify all existing foundation suites remain green"
+    - "Verify Alembic remains at head"
+  stuck_tasks: []
+  test_all: true
+  test_priority: "high_first"
+
+agent_communication:
+- agent: "main"
+  message: "The API contract tests existed but were not yet part of CI. The workflow is now updated to execute them before continuing the existing parser/ingestion/migration verification sequence."
