@@ -42,6 +42,8 @@ class ParsedNotification:
 
     application_start: ParsedField
     application_end: ParsedField
+    advertisement_number: ParsedField = None
+    vacancy_number: ParsedField = None
 
 
 class NotificationParser:
@@ -106,6 +108,8 @@ class NotificationParser:
 
             application_start=self._parse_application_start(text),
             application_end=self._parse_application_end(text),
+            advertisement_number=ParsedField(None),
+            vacancy_number=ParsedField(None),
         )
 
     # ================================================================
