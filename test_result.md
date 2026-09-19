@@ -387,3 +387,36 @@ test_plan:
 agent_communication:
 - agent: "main"
   message: "The document pipeline is intentionally deterministic at the orchestration boundary: CI uses an in-memory generated PDF and a fake fetcher, while production can supply official notification URLs. OCR is a fallback, not the default path when native PDF text exists."
+
+
+# Official source discovery update
+backend:
+  - task: "Official listing registry and PDF discovery"
+    implemented: true
+    working: "NA"
+    file: "backend/app/services/jobs/source_discovery.py"
+    stuck_count: 0
+    priority: "high"
+    needs_retesting: true
+    status_history:
+      - working: "NA"
+        agent: "main"
+        comment: "Added a PostgreSQL-backed registry for official government listing pages, due-check logic, and deterministic PDF-link discovery constrained to the supplied official listing page. This is intentionally not a broad web crawler."
+
+metadata:
+  test_sequence: 14
+
+test_plan:
+  current_focus:
+    - "Run deterministic official source discovery test"
+    - "Run Alembic upgrade through 0004"
+    - "Run document processing and job ingestion tests"
+    - "Run authentication, profile and personalized eligibility API tests"
+    - "Run parser/normalizer/evaluator/persistence regression tests"
+  stuck_tasks: []
+  test_all: true
+  test_priority: "high_first"
+
+agent_communication:
+- agent: "main"
+  message: "Source discovery is deliberately constrained to registered official listing pages and PDF links. It does not search the open web or ingest arbitrary domains. Scheduling is represented by due-source metadata; external cron/worker execution will be added after deterministic discovery is verified."
