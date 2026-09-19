@@ -633,3 +633,48 @@ test_plan:
 agent_communication:
 - agent: "main"
   message: "This slice removes a production-critical hard-coded Open status. The lifecycle is now derived from actual application dates, so expired notifications such as the inspected UPSC Advertisement 52/2026 will not be surfaced as Open. The API schema was also restored to match the jobs route contract before verification."
+
+
+# Current UPSC Advertisement 11 compatibility update
+backend:
+  - task: "Current UPSC multi-post advertisement wording compatibility"
+    implemented: true
+    working: "NA"
+    file: "backend/app/services/documents/parsing/notification_enhancer.py"
+    stuck_count: 0
+    priority: "high"
+    needs_retesting: true
+    status_history:
+      - working: "NA"
+        agent: "main"
+        comment: "Official UPSC recruitment pages currently surface Advertisement No. 11/2026. Independent current-source research identifies a 140-post Assistant Public Prosecutor entry within that advertisement and a 12-09-2026 to 02-10-2026 application window. The enhancer now recognizes numeric 'posts of' wording, while preserving the proven parser."
+  - task: "UPSC Advertisement 11 parser regression"
+    implemented: true
+    working: "NA"
+    file: "backend/tests/test_upsc_notification_enhancer.py"
+    stuck_count: 0
+    priority: "high"
+    needs_retesting: true
+    status_history:
+      - working: "NA"
+        agent: "main"
+        comment: "Added a focused regression fixture for current Advertisement 11/2026 Assistant Public Prosecutor wording: 140 posts, category age wording, application start/end dates, and UPSC organization."
+frontend: []
+
+metadata:
+  test_sequence: 21
+
+test_plan:
+  current_focus:
+    - "Run current UPSC Advertisement 11 parser compatibility test"
+    - "Run document processing regression"
+    - "Run job ingestion plus lifecycle status regression"
+    - "Run full parser/normalizer/evaluator/persistence suite"
+    - "Run Alembic upgrade through 0005"
+  stuck_tasks: []
+  test_all: true
+  test_priority: "high_first"
+
+agent_communication:
+- agent: "main"
+  message: "Current-source research confirms UPSC Advertisement 11/2026 is a live application-era notification as of September 2026. We are testing one concrete post wording before attempting multi-post advertisement decomposition; we will not ingest the whole 212-post advertisement as a single job."
