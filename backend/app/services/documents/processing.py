@@ -32,8 +32,9 @@ class NotificationProcessingService:
         self,
         *,
         notification_pdf_url: str,
-        official_apply_url: str,
+        official_source_url: str,
         official_website_url: str | None = None,
+        official_apply_url: str | None = None,
     ) -> NotificationProcessingResult:
         document = self.fetcher.fetch(notification_pdf_url)
         extracted = self.extractor.extract(document.content)
@@ -43,7 +44,8 @@ class NotificationProcessingService:
         parsed = self.parser.parse(extracted.text)
         job = self.ingestion.ingest(
             parsed,
-            official_url=official_apply_url,
+            official_url=official_source_url,
+            official_apply_url=official_apply_url,
             notification_pdf_url=notification_pdf_url,
             official_website_url=official_website_url,
             notification_text=extracted.text,
