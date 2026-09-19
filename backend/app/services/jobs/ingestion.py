@@ -8,6 +8,7 @@ from app.models.job import Job
 from app.models.job_source import JobSource
 from app.services.documents.parsing.notification_parser import ParsedNotification
 from app.services.eligibility.persistence import EligibilityPersistence
+from app.services.jobs.status import derive_job_status
 
 class JobIngestionService:
     def __init__(self, db: Session) -> None:
@@ -21,9 +22,10 @@ class JobIngestionService:
         job=self._find_job(source, parsed)
         if job is None:
             title=str(parsed.title.value).strip(); board=str(parsed.organization_name.value or "Government Recruitment").strip()
-            job=Job(title=title,slug=self._slug(title,board,content_hash),board=board,board_code=self._board_code(board),job_type=str(parsed.opportunity_type.value or "RECRUITMENT").strip(),state="All India",category="Government Jobs",post_name=title,total_vacancies=self._int_value(parsed.vacancy_count.value) or 0,qualification_required=str(parsed.degree.value) if parsed.degree.value else None,qualification_details=self._field_text(parsed,"qualification_text"),min_age=self._int_value(parsed.minimum_age.value),max_age=self._int_value(parsed.maximum_age.value),start_date=self._date_value(parsed.application_start.value),last_date=self._date_value(parsed.application_end.value),salary_scale=self._field_text(parsed,"salary_text"),official_apply_url=official_apply_url,official_notification_pdf_url=notification_pdf_url,official_website_url=official_website_url or official_url,status="Open",is_new_today=True)
+            job=Job(title=title,slug=self._slug(title,board,content_hash),board=board,board_code=self._board_code(board),job_type=str(parsed.opportunity_type.value or "RECRUITMENT").strip(),state="All India",category="Government Jobs",post_name=title,total_vacancies=self._int_value(parsed.vacancy_count.value) or 0,qualification_required=str(parsed.degree.value) if parsed.degree.value else None,qualification_details=self._field_text(parsed,"qualification_text"),min_age=self._int_value(parsed.minimum_age.value),max_age=self._int_value(parsed.maximum_age.value),start_date=self._date_value(parsed.application_start.value),last_date=self._date_value(parsed.application_end.value),salary_scale=self._field_text(parsed,"salary_text"),official_apply_url=official_apply_url,official_notification_pdf_url=notification_pdf_url,official_website_url=official_website_url or official_url,status="NO_DEADLINE",is_new_today=False)
             self.db.add(job); self.db.flush()
         else: self._update_job(job,parsed,official_url,notification_pdf_url,official_website_url,official_apply_url)
+        self._refresh_status(job)
         self.eligibility.persist(job,parsed); self.db.flush()
         if source is None: source=JobSource(job_id=job.id); self.db.add(source)
         source.organization=str(parsed.organization_name.value) if parsed.organization_name.value else None
@@ -45,6 +47,17 @@ class JobIngestionService:
     def _update_job(self,job,parsed,official_url,pdf_url,website_url,apply_url):
         job.total_vacancies=self._int_value(parsed.vacancy_count.value) or job.total_vacancies; job.min_age=self._int_value(parsed.minimum_age.value); job.max_age=self._int_value(parsed.maximum_age.value); job.qualification_required=str(parsed.degree.value) if parsed.degree.value else job.qualification_required; job.qualification_details=self._field_text(parsed,"qualification_text"); job.start_date=self._date_value(parsed.application_start.value); job.last_date=self._date_value(parsed.application_end.value); job.salary_scale=self._field_text(parsed,"salary_text"); job.official_notification_pdf_url=pdf_url; job.official_website_url=website_url or job.official_website_url
         if apply_url: job.official_apply_url=apply_url
+    @staticmethod
+    def _refresh_status(job: Job) -> None:
+        lifecycle = derive_job_status(
+            start_date=job.start_date,
+            last_date=job.last_date,
+            notification_date=job.notification_date,
+        )
+        job.status = lifecycle.status
+        job.is_closing_soon = lifecycle.is_closing_soon
+        job.is_new_today = lifecycle.is_new_today
+
     @staticmethod
     def _field_text(parsed,field_name):
         value=getattr(parsed,field_name).value; return str(value).strip() if value is not None else None
