@@ -64,3 +64,36 @@ test_plan:
 agent_communication:
 - agent: "main"
   message: "Run #242 passed the earlier ingestion cases but failed only because the shared-URL regression instantiated NotificationParser directly; production processing instantiates NotificationParserEnhancer. Aligning the regression with the production boundary keeps the test focused on source isolation rather than parser capability."
+
+
+## Job lifecycle status regression - Pre-Test State
+backend:
+  - task: "Job lifecycle status boundary regression"
+    implemented: true
+    working: "NA"
+    file: "backend/tests/test_job_status.py"
+    stuck_count: 0
+    priority: "high"
+    needs_retesting: true
+    status_history:
+      - working: "NA"
+        agent: "main"
+        comment: "Run #246 reached the lifecycle status suite after the parser/ingestion fixes. One test fixture used a deadline exactly three days away while the production contract intentionally marks 0..closing_soon_days days as closing soon. The fixture is being moved outside the three-day boundary; production logic remains unchanged."
+metadata:
+  test_sequence: 9
+
+test_plan:
+  current_focus:
+    - "Run job lifecycle status regression"
+    - "Run current UPSC Advertisement 11 parser compatibility test"
+    - "Run document processing regression"
+    - "Run source discovery and notification queue regressions"
+    - "Run full parser/normalizer/evaluator/persistence suite"
+    - "Run Alembic upgrade through 0006"
+  stuck_tasks: []
+  test_all: true
+  test_priority: "high_first"
+
+agent_communication:
+- agent: "main"
+  message: "Run #246 passed the preceding suites and failed only at the lifecycle fixture boundary. Correcting the contradictory fixture rather than changing the closing-soon production rule."
