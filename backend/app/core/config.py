@@ -15,6 +15,7 @@ class Settings(BaseSettings):
     jwt_secret: str = Field(..., validation_alias="JWT_SECRET")
     jwt_algorithm: str = "HS256"
     access_token_expire_minutes: int = Field(60 * 24 * 7, ge=5, le=60 * 24 * 30)
+    ingestion_sync_token: str = Field(..., validation_alias="INGESTION_SYNC_TOKEN", min_length=32)
 
     model_config = SettingsConfigDict(
         env_file=".env",
