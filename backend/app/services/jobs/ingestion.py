@@ -18,7 +18,7 @@ class JobIngestionService:
         if not official_url or urlparse(official_url).scheme not in {"http","https"}: raise ValueError("A valid official source URL is required.")
         if not parsed.title.value: raise ValueError("Notification title is required before ingestion.")
         content_hash=hashlib.sha256(notification_text.encode("utf-8")).hexdigest() if notification_text else None
-        source=self._find_source(official_url, notification_pdf_url, content_hash)
+        source=self._find_source(official_url, notification_pdf_url, content_hash, self._field_value(parsed, "vacancy_number"))
         job=self._find_job(source, parsed)
         if job is None:
             title=str(parsed.title.value).strip(); board=str(parsed.organization_name.value or "Government Recruitment").strip()
@@ -32,14 +32,33 @@ class JobIngestionService:
         source.official_url=official_url; source.notification_pdf_url=notification_pdf_url; source.source_type="official"; source.last_checked_at=datetime.now(timezone.utc); source.last_processed_at=datetime.now(timezone.utc); source.content_hash=content_hash
         self.db.commit(); self.db.refresh(job); return job
 
-    def _find_source(self, official_url, pdf_url, content_hash):
-        source=self.db.query(JobSource).filter(JobSource.official_url==official_url).one_or_none()
-        if source is not None: return source
+    def _find_source(self, official_url, pdf_url, content_hash, vacancy_number=None):
+        # A content hash is block-specific, so it is the safest idempotency key
+        # when several posts share one advertisement PDF.
+        if content_hash:
+            source = self.db.query(JobSource).filter(JobSource.content_hash == content_hash).one_or_none()
+            if source is not None:
+                return source
+
+        # Multi-post advertisements can share official/PDF URLs. Resolve the
+        # source through the post's explicit vacancy number before URL matching.
+        if vacancy_number:
+            job = self.db.query(Job).filter(Job.vacancy_number == vacancy_number).one_or_none()
+            if job is not None:
+                source = self.db.query(JobSource).filter(JobSource.job_id == job.id).one_or_none()
+                if source is not None:
+                    return source
+
+        if official_url:
+            source = self.db.query(JobSource).filter(JobSource.official_url == official_url).one_or_none()
+            if source is not None:
+                return source
         if pdf_url:
-            source=self.db.query(JobSource).filter(JobSource.notification_pdf_url==pdf_url).one_or_none()
-            if source is not None: return source
-        if content_hash: return self.db.query(JobSource).filter(JobSource.content_hash==content_hash).one_or_none()
+            source = self.db.query(JobSource).filter(JobSource.notification_pdf_url == pdf_url).one_or_none()
+            if source is not None:
+                return source
         return None
+
     def _find_job(self,source,parsed):
         if source is not None:
             return self.db.get(Job,source.job_id)
