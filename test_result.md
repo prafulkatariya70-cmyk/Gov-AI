@@ -523,3 +523,36 @@ test_plan:
 agent_communication:
 - agent: "main"
   message: "The ingestion cycle is deliberately a bounded orchestration primitive, not an always-on process. Deployment can invoke it every few minutes from a scheduler or worker environment without tying background work to FastAPI lifecycle."
+
+
+# Production job data-contract hardening update
+backend:
+  - task: "Separate official source URLs from application URLs and harden job identity"
+    implemented: true
+    working: "NA"
+    file: "backend/app/services/jobs/ingestion.py"
+    stuck_count: 0
+    priority: "high"
+    needs_retesting: true
+    status_history:
+      - working: "NA"
+        agent: "main"
+        comment: "Hardened ingestion so an official listing/source URL is never silently presented as an application URL. Application URL is now optional and source provenance remains explicit. Job slugs receive a deterministic source fingerprint to prevent collisions across similarly named recruitment notices. Eligibility response list defaults are also being converted to safe factories."
+
+metadata:
+  test_sequence: 18
+
+test_plan:
+  current_focus:
+    - "Run ingestion identity and URL contract tests"
+    - "Run ingestion cycle and notification queue tests"
+    - "Run document processing, source discovery and official-source tests"
+    - "Run full parser/normalizer/evaluator/persistence regression suite"
+    - "Run Alembic upgrade through 0005"
+  stuck_tasks: []
+  test_all: true
+  test_priority: "high_first"
+
+agent_communication:
+- agent: "main"
+  message: "The data contract now distinguishes source provenance from user-facing application destinations. If a listing only exposes a notification PDF, GovCareerAI will retain the official source rather than inventing an application URL."
