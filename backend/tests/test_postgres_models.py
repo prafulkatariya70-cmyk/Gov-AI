@@ -4,7 +4,7 @@ import os
 os.environ.setdefault("DATABASE_URL", "sqlite+pysqlite:///:memory:")
 
 from app.core.database import Base
-from app.models import ApplicationTracker, Job, JobEligibility, JobSource, User, UserProfile
+from app.models import (ApplicationTracker, Job, JobEligibility, JobSource, JobSourceRegistry, NotificationQueueItem, User, UserProfile)
 
 
 def test_core_models_are_registered():
@@ -15,6 +15,8 @@ def test_core_models_are_registered():
         "job_eligibility",
         "job_sources",
         "application_trackers",
+        "job_source_registry",
+        "notification_queue",
     }
     assert set(Base.metadata.tables) == expected
 
