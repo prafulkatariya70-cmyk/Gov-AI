@@ -221,3 +221,36 @@ test_plan:
 agent_communication:
 - agent: "main"
   message: "Authentication is intentionally built before personalized eligibility. No demo user or unauthenticated candidate identity is introduced."
+
+
+# Authentication verification update
+backend:
+  - task: "JWT authentication foundation"
+    implemented: true
+    working: "NA"
+    file: "backend/app/api/routes/auth.py"
+    stuck_count: 0
+    priority: "high"
+    needs_retesting: true
+    status_history:
+      - working: "NA"
+        agent: "main"
+        comment: "Auth implementation is present, but the CI workflow did not yet execute test_auth.py. Added an explicit authentication test step with JWT_SECRET to the foundation workflow; this push will trigger the verification gate."
+
+metadata:
+  test_sequence: 9
+
+test_plan:
+  current_focus:
+    - "Run authentication tests in CI"
+    - "Verify password hashing and JWT round trip"
+    - "Verify register, login, /me, duplicate registration, invalid credentials, and unauthenticated access"
+    - "Run full backend foundation regression suite"
+    - "Verify Alembic upgrade remains at 0003"
+  stuck_tasks: []
+  test_all: true
+  test_priority: "high_first"
+
+agent_communication:
+- agent: "main"
+  message: "Before adding the profile API, the auth gate must be executed. The workflow now explicitly runs test_auth.py; no personalized endpoint work will be started until this gate passes."
