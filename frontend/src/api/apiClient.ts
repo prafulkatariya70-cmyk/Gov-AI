@@ -1,43 +1,139 @@
-import {
-  Job,
-  CandidateProfile,
-  ApplicationTrackerItem,
-  DailyCapsule,
-  CalendarEvent,
-  CategorySummaryItem,
-} from "@/src/types";
+import { Job, CandidateProfile } from "@/src/types";
+import { storage } from "@/src/utils/storage";
 
-const BACKEND_URL = process.env.EXPO_PUBLIC_BACKEND_URL || process.env.EXPO_BACKEND_URL || "";
-const API_BASE = `${BACKEND_URL}/api`;
+const BACKEND_URL = (
+  process.env.EXPO_PUBLIC_BACKEND_URL ||
+  process.env.EXPO_BACKEND_URL ||
+  ""
+).replace(/\/$/, "");
+const API_BASE = `${BACKEND_URL}/api/v1`;
 
-const DEFAULT_USER_ID = "demo_candidate";
+const ACCESS_TOKEN_KEY = "govcareerai.access_token";
 
-async function request<T>(endpoint: string, options?: RequestInit): Promise<T> {
+export interface AuthUser {
+  id: string;
+  email: string;
+  is_active: boolean;
+}
+
+export interface AuthResponse {
+  access_token: string;
+  token_type: "bearer";
+  user: AuthUser;
+}
+
+export interface EligibilityDecision {
+  status: string;
+  reasons: string[];
+  failed_requirements: string[];
+  unknown_requirements: string[];
+  passed_requirements: string[];
+  evidence: Array<Record<string, unknown>>;
+  score: number | null;
+  confidence: string | null;
+}
+
+async function getAccessToken(): Promise<string | null> {
+  return storage.secureGet<string | null>(ACCESS_TOKEN_KEY, null);
+}
+
+export async function clearAccessToken(): Promise<void> {
+  await storage.secureRemove(ACCESS_TOKEN_KEY);
+}
+
+async function request<T>(
+  endpoint: string,
+  options: RequestInit = {},
+  authenticated = true,
+): Promise<T> {
   const url = `${API_BASE}${endpoint}`;
+  const token = authenticated ? await getAccessToken() : null;
+
   try {
     const response = await fetch(url, {
       ...options,
       headers: {
         "Content-Type": "application/json",
         Accept: "application/json",
-        ...(options?.headers || {}),
+        ...(token ? { Authorization: `Bearer ${token}` } : {}),
+        ...(options.headers || {}),
       },
     });
+
+    if (response.status === 401 && authenticated) {
+      await clearAccessToken();
+    }
 
     if (!response.ok) {
       const errorBody = await response.text();
       throw new Error(`API error ${response.status}: ${errorBody}`);
     }
 
-    return await response.json();
-  } catch (error: any) {
+    return (await response.json()) as T;
+  } catch (error) {
     console.error(`[API Error] ${endpoint}:`, error);
     throw error;
   }
 }
 
+function mapJob(job: any): Job {
+  const salary = job.salary_scale || "Salary details unavailable";
+  return {
+    ...job,
+    salary_scale: salary,
+    in_hand_salary: salary,
+    qualification_required: job.qualification_required || "Not specified",
+    qualification_details: job.qualification_details || "",
+    min_age: job.min_age ?? 0,
+    max_age: job.max_age ?? 0,
+    exam_date: job.exam_date || "",
+    admit_card_date: job.admit_card_date || "",
+    syllabus_overview: job.syllabus_overview || "",
+    is_featured: Boolean(job.is_featured),
+    is_new_today: Boolean(job.is_new_today),
+    is_closing_soon: Boolean(job.is_closing_soon),
+  };
+}
+
 export const api = {
-  // Jobs
+  async register(email: string, password: string): Promise<AuthResponse> {
+    const response = await request<AuthResponse>(
+      "/auth/register",
+      {
+        method: "POST",
+        body: JSON.stringify({ email, password }),
+      },
+      false,
+    );
+    await storage.secureSet(ACCESS_TOKEN_KEY, response.access_token);
+    return response;
+  },
+
+  async login(email: string, password: string): Promise<AuthResponse> {
+    const response = await request<AuthResponse>(
+      "/auth/login",
+      {
+        method: "POST",
+        body: JSON.stringify({ email, password }),
+      },
+      false,
+    );
+    await storage.secureSet(ACCESS_TOKEN_KEY, response.access_token);
+    return response;
+  },
+
+  async getCurrentUser(): Promise<AuthUser> {
+    return request<AuthUser>("/auth/me");
+  },
+
+  async logout(): Promise<void> {
+    await clearAccessToken();
+  },
+
+  async hasAccessToken(): Promise<boolean> {
+    return Boolean(await getAccessToken());
+  },
+
   async getJobs(params?: {
     search?: string;
     category?: string;
@@ -45,11 +141,9 @@ export const api = {
     state?: string;
     qualification?: string;
     status?: string;
-    is_featured?: boolean;
-    is_new?: boolean;
-    sort_by?: string;
-    user_id?: string;
-  }): Promise<{ count: number; jobs: Job[]; candidate_summary: any }> {
+    page?: number;
+    page_size?: number;
+  }): Promise<{ count: number; page: number; page_size: number; jobs: Job[] }> {
     const searchParams = new URLSearchParams();
     if (params?.search) searchParams.append("search", params.search);
     if (params?.category) searchParams.append("category", params.category);
@@ -57,156 +151,97 @@ export const api = {
     if (params?.state) searchParams.append("state", params.state);
     if (params?.qualification) searchParams.append("qualification", params.qualification);
     if (params?.status) searchParams.append("status", params.status);
-    if (params?.is_featured !== undefined) searchParams.append("is_featured", String(params.is_featured));
-    if (params?.is_new !== undefined) searchParams.append("is_new", String(params.is_new));
-    if (params?.sort_by) searchParams.append("sort_by", params.sort_by);
-    searchParams.append("user_id", params?.user_id || DEFAULT_USER_ID);
+    if (params?.page) searchParams.append("page", String(params.page));
+    if (params?.page_size) searchParams.append("page_size", String(params.page_size));
 
-    const queryStr = searchParams.toString();
-    return request<{ count: number; jobs: Job[]; candidate_summary: any }>(
-      `/jobs${queryStr ? `?${queryStr}` : ""}`
+    const query = searchParams.toString();
+    const response = await request<{
+      count: number;
+      page: number;
+      page_size: number;
+      jobs: any[];
+    }>(`/jobs${query ? `?${query}` : ""}`);
+
+    return {
+      ...response,
+      jobs: response.jobs.map(mapJob),
+    };
+  },
+
+  async getJobDetail(identifier: string): Promise<Job> {
+    const job = await request<any>(`/jobs/${encodeURIComponent(identifier)}`);
+    return mapJob(job);
+  },
+
+  async getJobEligibility(identifier: string) {
+    return request<{
+      id: string;
+      job_id: string;
+      normalized_rules: Record<string, unknown> | null;
+      qualification_text: string | null;
+      experience_requirement: string | null;
+      service_requirement: string | null;
+      department_requirement: string | null;
+      special_requirements: string | null;
+    }>(`/jobs/${encodeURIComponent(identifier)}/eligibility`);
+  },
+
+  async getMyJobEligibility(identifier: string): Promise<EligibilityDecision> {
+    return request<EligibilityDecision>(
+      `/jobs/${encodeURIComponent(identifier)}/eligibility/me`,
     );
   },
 
-  async getRecommendedJobs(user_id: string = DEFAULT_USER_ID): Promise<{
-    candidate: CandidateProfile;
-    high_match_count: number;
-    high_match_jobs: Job[];
-    eligible_jobs: Job[];
-    need_attention_jobs: Job[];
-  }> {
-    return request(`/jobs/recommended?user_id=${user_id}`);
+  async getProfile(): Promise<CandidateProfile> {
+    const profile = await request<any>("/profile");
+    return {
+      ...profile,
+      additional_certs: profile.additional_certs || [],
+      preferred_categories: profile.preferred_categories
+        ? profile.preferred_categories.split(",").map((value: string) => value.trim()).filter(Boolean)
+        : [],
+      preferred_states: profile.preferred_states
+        ? profile.preferred_states.split(",").map((value: string) => value.trim()).filter(Boolean)
+        : [],
+    };
   },
 
-  async getJobDetail(jobId: string, user_id: string = DEFAULT_USER_ID): Promise<Job> {
-    return request<Job>(`/jobs/${jobId}?user_id=${user_id}`);
-  },
+  async updateProfile(profile: Partial<CandidateProfile>): Promise<CandidateProfile> {
+    const payload = {
+      full_name: profile.full_name || "",
+      phone: profile.phone || null,
+      dob: profile.dob || null,
+      category: profile.category || null,
+      gender: profile.gender || null,
+      domicile_state: profile.domicile_state || null,
+      qualification: profile.qualification || null,
+      degree_name: profile.degree_name || null,
+      stream: profile.stream || null,
+      percentage_or_cgpa: profile.percentage_or_cgpa || null,
+      additional_certs: profile.additional_certs || null,
+      height_cm: profile.height_cm ?? null,
+      preferred_categories: Array.isArray(profile.preferred_categories)
+        ? profile.preferred_categories.join(", ")
+        : profile.preferred_categories || null,
+      preferred_states: Array.isArray(profile.preferred_states)
+        ? profile.preferred_states.join(", ")
+        : profile.preferred_states || null,
+    };
 
-  async triggerJobSync(): Promise<{
-    status: string;
-    synced_at: string;
-    new_notifications_found: number;
-    total_active_jobs: number;
-    message: string;
-  }> {
-    return request("/jobs/sync-check", {
-      method: "POST",
+    const updated = await request<any>("/profile", {
+      method: "PUT",
+      body: JSON.stringify(payload),
     });
-  },
 
-  // Candidate Profile
-  async getProfile(user_id: string = DEFAULT_USER_ID): Promise<CandidateProfile> {
-    return request<CandidateProfile>(`/profile?user_id=${user_id}`);
-  },
-
-  async updateProfile(
-    profile: Partial<CandidateProfile>,
-    user_id: string = DEFAULT_USER_ID
-  ): Promise<CandidateProfile> {
-    return request<CandidateProfile>(`/profile?user_id=${user_id}`, {
-      method: "POST",
-      body: JSON.stringify(profile),
-    });
-  },
-
-  // Application Pipeline / Tracker
-  async getTracker(user_id: string = DEFAULT_USER_ID): Promise<{
-    all_tracked_count: number;
-    saved: ApplicationTrackerItem[];
-    applied: ApplicationTrackerItem[];
-    admit_card: ApplicationTrackerItem[];
-    exam_taken: ApplicationTrackerItem[];
-    selected: ApplicationTrackerItem[];
-  }> {
-    return request(`/tracker?user_id=${user_id}`);
-  },
-
-  async updateTrackerItem(
-    item: {
-      job_id: string;
-      status: string;
-      application_number?: string;
-      roll_number?: string;
-      exam_center?: string;
-      applied_date?: string;
-      exam_date?: string;
-      notes?: string;
-      reminder_enabled?: boolean;
-    },
-    user_id: string = DEFAULT_USER_ID
-  ): Promise<ApplicationTrackerItem> {
-    return request<ApplicationTrackerItem>(`/tracker?user_id=${user_id}`, {
-      method: "POST",
-      body: JSON.stringify(item),
-    });
-  },
-
-  async removeFromTracker(job_id: string, user_id: string = DEFAULT_USER_ID): Promise<{ status: string }> {
-    return request(`/tracker/${job_id}?user_id=${user_id}`, {
-      method: "DELETE",
-    });
-  },
-
-  // Exam Calendar
-  async getCalendar(): Promise<{ count: number; events: CalendarEvent[] }> {
-    return request<{ count: number; events: CalendarEvent[] }>("/calendar");
-  },
-
-  // Daily Capsule & Streak
-  async getDailyCapsule(user_id: string = DEFAULT_USER_ID): Promise<{
-    capsule: DailyCapsule;
-    user_streak: number;
-    user_points: number;
-    is_checked_in_today: boolean;
-  }> {
-    return request(`/daily-capsule?user_id=${user_id}`);
-  },
-
-  async checkinDaily(user_id: string = DEFAULT_USER_ID): Promise<{
-    status: string;
-    message: string;
-    streak_count: number;
-    points: number;
-    points_earned: number;
-  }> {
-    return request(`/daily-capsule/checkin?user_id=${user_id}`, {
-      method: "POST",
-    });
-  },
-
-  async submitQuiz(
-    answers: Record<string, number>,
-    user_id: string = DEFAULT_USER_ID
-  ): Promise<{
-    score: number;
-    total: number;
-    points_earned: number;
-    results: Array<{
-      id: string;
-      question: string;
-      user_selected?: number;
-      correct_option_index: number;
-      is_correct: boolean;
-      explanation: string;
-    }>;
-    feedback: string;
-  }> {
-    return request(`/daily-capsule/quiz-submit?user_id=${user_id}`, {
-      method: "POST",
-      body: JSON.stringify({ answers }),
-    });
-  },
-
-  // Categories & Stats
-  async getCategoriesSummary(): Promise<{
-    total_active_vacancies: number;
-    total_notifications: number;
-    categories: CategorySummaryItem[];
-  }> {
-    return request<{
-      total_active_vacancies: number;
-      total_notifications: number;
-      categories: CategorySummaryItem[];
-    }>("/categories-summary");
+    return {
+      ...updated,
+      additional_certs: updated.additional_certs || [],
+      preferred_categories: updated.preferred_categories
+        ? updated.preferred_categories.split(",").map((value: string) => value.trim()).filter(Boolean)
+        : [],
+      preferred_states: updated.preferred_states
+        ? updated.preferred_states.split(",").map((value: string) => value.trim()).filter(Boolean)
+        : [],
+    };
   },
 };
