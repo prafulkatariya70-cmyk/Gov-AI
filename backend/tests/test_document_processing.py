@@ -42,3 +42,47 @@ def test_processing_pipeline_extracts_parses_and_persists():
         assert db.query(__import__("app.models", fromlist=["Job"]).Job).count() == 1
     finally:
         db.close()
+
+
+
+MULTI_POST_TEXT = """ADVERTISEMENT NO. 11/2026
+UNION PUBLIC SERVICE COMMISSION
+(Vacancy No. 26091106212) 140 posts of Assistant Public Prosecutor.
+PAY LEVEL-10 in the Pay Matrix.
+AGE: 35 years for UR/EWS, 38 years for OBC and 40 years for SC/ST.
+
+(Vacancy No. 26091106213) 20 posts of another government post.
+PAY LEVEL-8 in the Pay Matrix.
+"""
+
+
+def make_pdf_for_text(text: str) -> bytes:
+    document = fitz.open()
+    page = document.new_page()
+    page.insert_text((50, 70), text, fontsize=12)
+    content = document.tobytes()
+    document.close()
+    return content
+
+
+def test_processing_pipeline_ingests_each_explicit_post_separately():
+    engine = create_engine("sqlite+pysqlite:///:memory:")
+    Base.metadata.create_all(engine)
+    db = Session(engine)
+
+    class FakeFetcher:
+        def fetch(self, url):
+            content = make_pdf_for_text(MULTI_POST_TEXT)
+            import hashlib
+            return FetchedDocument(url, content, "application/pdf", hashlib.sha256(content).hexdigest())
+
+    try:
+        service = NotificationProcessingService(db, fetcher=FakeFetcher())
+        result = service.process(
+            notification_pdf_url="https://upsc.gov.in/ad11.pdf",
+            official_source_url="https://upsc.gov.in/ad11",
+        )
+        assert result.jobs_created_or_updated == 2
+        assert db.query(__import__("app.models", fromlist=["Job"]).Job).count() == 2
+    finally:
+        db.close()
