@@ -6,7 +6,7 @@ from sqlalchemy.orm import Session
 
 from app.services.documents.fetcher import DocumentFetcher
 from app.services.documents.pdf_extractor import PDFTextExtractor
-from app.services.documents.parsing.notification_parser import NotificationParser
+from app.services.documents.parsing.notification_enhancer import NotificationParserEnhancer
 from app.services.jobs.ingestion import JobIngestionService
 
 
@@ -25,7 +25,7 @@ class NotificationProcessingService:
     def __init__(self, db: Session, *, fetcher=None, extractor=None, parser=None) -> None:
         self.fetcher = fetcher or DocumentFetcher()
         self.extractor = extractor or PDFTextExtractor()
-        self.parser = parser or NotificationParser()
+        self.parser = parser or NotificationParserEnhancer()
         self.ingestion = JobIngestionService(db)
 
     def process(
