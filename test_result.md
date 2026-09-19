@@ -222,3 +222,10 @@ agent_communication:
 - Verify missing and incorrect tokens return 401.
 - Verify the hourly GitHub Actions workflow calls the protected ingestion endpoint using repository secrets.
 - Do not claim live production scheduling until deployment secrets are configured.
+
+
+## Deployment foundation verification plan
+- Verify production backend container definition includes FastAPI, Tesseract, and required Python dependencies.
+- Verify CORS is configured from environment rather than wildcard origins.
+- Verify liveness and database readiness health endpoints.
+- Verify CI covers the health contract before deployment.
