@@ -420,3 +420,37 @@ test_plan:
 agent_communication:
 - agent: "main"
   message: "Source discovery is deliberately constrained to registered official listing pages and PDF links. It does not search the open web or ingest arbitrary domains. Scheduling is represented by due-source metadata; external cron/worker execution will be added after deterministic discovery is verified."
+
+
+# Official source bootstrap update
+backend:
+  - task: "Initial official recruitment source allowlist"
+    implemented: true
+    working: "NA"
+    file: "backend/app/services/jobs/official_sources.py"
+    stuck_count: 0
+    priority: "high"
+    needs_retesting: true
+    status_history:
+      - working: "NA"
+        agent: "main"
+        comment: "Added an idempotent allowlist/bootstrap for UPSC recruitment advertisements, UPSC recruitment-test notices, and IBPS recruitment listings. These URLs are official domains selected from current official source pages; no third-party aggregator is used."
+
+metadata:
+  test_sequence: 15
+
+test_plan:
+  current_focus:
+    - "Run official source allowlist test"
+    - "Run deterministic source discovery test"
+    - "Run Alembic upgrade through 0004"
+    - "Run document processing and job ingestion tests"
+    - "Run authentication, profile and personalized eligibility API tests"
+    - "Run parser/normalizer/evaluator/persistence regression tests"
+  stuck_tasks: []
+  test_all: true
+  test_priority: "high_first"
+
+agent_communication:
+- agent: "main"
+  message: "The initial source registry is intentionally small and allowlisted. Expansion to SSC, RRB, state commissions and other boards will happen source-by-source with dedicated verification rather than broad scraping."
