@@ -45,8 +45,40 @@ class JobIngestionService:
         title=str(parsed.title.value or "").strip(); board=str(parsed.organization_name.value or "").strip()
         return self.db.query(Job).filter(Job.title==title,Job.board==board).one_or_none()
     def _update_job(self,job,parsed,official_url,pdf_url,website_url,apply_url):
-        job.total_vacancies=self._int_value(parsed.vacancy_count.value) or job.total_vacancies; job.min_age=self._int_value(parsed.minimum_age.value); job.max_age=self._int_value(parsed.maximum_age.value); job.qualification_required=str(parsed.degree.value) if parsed.degree.value else job.qualification_required; job.qualification_details=self._field_text(parsed,"qualification_text"); job.start_date=self._date_value(parsed.application_start.value); job.last_date=self._date_value(parsed.application_end.value); job.salary_scale=self._field_text(parsed,"salary_text"); job.official_notification_pdf_url=pdf_url; job.official_website_url=website_url or job.official_website_url
-        if apply_url: job.official_apply_url=apply_url
+        vacancy_count = self._int_value(parsed.vacancy_count.value)
+        min_age = self._int_value(parsed.minimum_age.value)
+        max_age = self._int_value(parsed.maximum_age.value)
+        qualification_required = str(parsed.degree.value).strip() if parsed.degree.value else None
+        qualification_details = self._field_text(parsed,"qualification_text")
+        start_date = self._date_value(parsed.application_start.value)
+        last_date = self._date_value(parsed.application_end.value)
+        salary_scale = self._field_text(parsed,"salary_text")
+
+        # Parser passes can be partial. Never erase a previously verified value
+        # merely because a later extraction did not recover that field.
+        if vacancy_count is not None:
+            job.total_vacancies = vacancy_count
+        if min_age is not None:
+            job.min_age = min_age
+        if max_age is not None:
+            job.max_age = max_age
+        if qualification_required:
+            job.qualification_required = qualification_required
+        if qualification_details:
+            job.qualification_details = qualification_details
+        if start_date is not None:
+            job.start_date = start_date
+        if last_date is not None:
+            job.last_date = last_date
+        if salary_scale:
+            job.salary_scale = salary_scale
+        if pdf_url:
+            job.official_notification_pdf_url = pdf_url
+        if website_url:
+            job.official_website_url = website_url
+        if apply_url:
+            job.official_apply_url = apply_url
+
     @staticmethod
     def _refresh_status(job: Job) -> None:
         lifecycle = derive_job_status(
