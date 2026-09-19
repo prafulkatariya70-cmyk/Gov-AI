@@ -1,4 +1,37 @@
-#====================================================================================================
+#================================================================================================
+
+## Eligibility API Slice - Pre-Test State
+backend:
+  - task: "Public job eligibility requirements API"
+    implemented: true
+    working: "NA"
+    file: "backend/app/api/routes/jobs.py"
+    stuck_count: 0
+    priority: "high"
+    needs_retesting: true
+    status_history:
+      - working: "NA"
+        agent: "main"
+        comment: "Added a read-only job eligibility requirements endpoint backed by persisted PostgreSQL JobEligibility data. This endpoint intentionally does not perform user-specific eligibility decisions because authentication is not implemented yet."
+
+metadata:
+  test_sequence: 7
+
+test_plan:
+  current_focus:
+    - "Verify persisted eligibility requirements API route registration"
+    - "Verify job eligibility repository lookup"
+    - "Run full backend foundation regression suite"
+    - "Run Alembic upgrade through revision 0003"
+    - "Verify migration current reports 0003 as head"
+  stuck_tasks: []
+  test_all: true
+  test_priority: "high_first"
+
+agent_communication:
+- agent: "main"
+  message: "CI run #90 passed all existing foundation tests and Alembic reached 0003_profile_eligibility_fields (head). The next slice exposes persisted job eligibility requirements through the production API without introducing unauthenticated candidate-specific decisions."
+====
 # START - Testing Protocol - DO NOT EDIT OR REMOVE THIS SECTION
 #====================================================================================================
 
