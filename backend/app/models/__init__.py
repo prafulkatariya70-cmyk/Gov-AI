@@ -5,6 +5,7 @@ from app.models.job_eligibility import JobEligibility
 from app.models.job_source import JobSource
 from app.models.job_source_registry import JobSourceRegistry
 from app.models.application_tracker import ApplicationTracker
+from app.models.notification_queue import NotificationQueueItem
 
 __all__ = ["User", "UserProfile", "Job", "JobEligibility", "JobSource",
-    "JobSourceRegistry", "ApplicationTracker"]
+    "JobSourceRegistry", "ApplicationTracker", "NotificationQueueItem"]
