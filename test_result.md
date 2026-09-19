@@ -454,3 +454,37 @@ test_plan:
 agent_communication:
 - agent: "main"
   message: "The initial source registry is intentionally small and allowlisted. Expansion to SSC, RRB, state commissions and other boards will happen source-by-source with dedicated verification rather than broad scraping."
+
+
+# Notification queue and worker update
+backend:
+  - task: "Discovered notification queue with retry and processing states"
+    implemented: true
+    working: "NA"
+    file: "backend/app/services/jobs/queue.py"
+    stuck_count: 0
+    priority: "high"
+    needs_retesting: true
+    status_history:
+      - working: "NA"
+        agent: "main"
+        comment: "Added a PostgreSQL notification queue with unique PDF URLs, PENDING/PROCESSING/PROCESSED/FAILED states, bounded retries, exponential backoff, and a worker service that invokes the existing document-processing pipeline. Added migration 0005."
+
+metadata:
+  test_sequence: 16
+
+test_plan:
+  current_focus:
+    - "Run queue enqueue and retry-state tests"
+    - "Run source discovery and official-source allowlist tests"
+    - "Run document processing and job ingestion tests"
+    - "Run Alembic upgrade through 0005"
+    - "Run authentication, profile and personalized eligibility API tests"
+    - "Run parser/normalizer/evaluator/persistence regression tests"
+  stuck_tasks: []
+  test_all: true
+  test_priority: "high_first"
+
+agent_communication:
+- agent: "main"
+  message: "The worker is intentionally callable as a service rather than embedded in FastAPI startup. Production scheduling can run it from a separate worker/cron process, preventing long-running PDF/OCR work from blocking API requests."
