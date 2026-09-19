@@ -51,6 +51,9 @@ jobs:
       - name: Run eligibility engine boundary tests
         run: python -m pytest tests/test_eligibility_engine.py -q
 
+      - name: Run database readiness health tests
+        run: python -m pytest tests/test_health.py -q
+
       - name: Run authentication tests
         run: python -m pytest tests/test_auth.py -q
 
