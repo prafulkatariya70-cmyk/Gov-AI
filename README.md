@@ -1,73 +1,38 @@
-<<<<<<< ours
-\# GovCareer AI
-
-
+# GovCareer AI
 
 AI-powered government career platform for India.
 
-
-
-\## Vision
-
-
+## Vision
 
 Help users discover government opportunities they are eligible for, understand recruitment notifications, track applications, and manage their government-career journey.
 
+## Initial Scope
 
+- Central government jobs
+- Karnataka government jobs
+- Personalized eligibility matching
+- Government notification intelligence
+- Application tracking
+- Recruitment alerts
 
-\## Initial Scope
+## Tech Stack
 
-
-
-\- Central government jobs
-
-\- Karnataka government jobs
-
-\- Personalized eligibility matching
-
-\- Government notification intelligence
-
-\- Application tracking
-
-\- Recruitment alerts
-
-
-
-\## Tech Stack
-
-
-
-\### Frontend
+### Frontend
 
 Next.js
 
-
-
-\### Backend
+### Backend
 
 Python + FastAPI
 
-
-
-\### Database
+### Database
 
 PostgreSQL
 
-
-
-\### AI
+### AI
 
 LLM-powered career and notification intelligence
 
-
-
-\## Project Status
-
-
+## Project Status
 
 🚧 Under Development
-
-||||||| base
-=======
-# Here are your Instructions
->>>>>>> theirs
