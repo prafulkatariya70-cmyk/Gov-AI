@@ -4,7 +4,6 @@ import re
 from datetime import date, datetime
 from urllib.parse import urljoin
 
-import httpx
 import requests
 from bs4 import BeautifulSoup
 
@@ -108,14 +107,30 @@ class KPSCAdapter(JobSourceAdapter):
         # (X-XSS-Protection has whitespace before the colon) that
         # strict httpx/httpcore rejects before the body can be read.
         # Use the existing requests dependency for this legacy endpoint.
-        response = requests.get(
-            KPSC_NOTIFICATION_URL,
-            headers=headers,
-            timeout=(30.0, 60.0),
-            allow_redirects=True,
+        last_error: Exception | None = None
+
+        for attempt in range(3):
+            try:
+                response = requests.get(
+                    KPSC_NOTIFICATION_URL,
+                    headers=headers,
+                    timeout=(15.0, 25.0),
+                    allow_redirects=True,
+                )
+                response.raise_for_status()
+                return response.text
+            except requests.RequestException as exc:
+                last_error = exc
+
+                if attempt < 2:
+                    import time
+
+                    time.sleep(2 * (attempt + 1))
+
+        raise RuntimeError(
+            f"KPSC notification page unavailable after 3 attempts: "
+            f"{last_error}"
         )
-        response.raise_for_status()
-        return response.text
 
     def _extract_notification_links(
         self,
