@@ -37,6 +37,13 @@ SOURCE_CONFIGS = {
         source_type="government",
         check_interval_minutes=30,
     ),
+
+    "KPSC": SourceConfig(
+        name="KPSC",
+        base_url="https://kpsc.kar.nic.in/",
+        source_type="government",
+        check_interval_minutes=30,
+    ),
 }
 
 
