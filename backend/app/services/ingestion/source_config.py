@@ -1,5 +1,9 @@
 from dataclasses import dataclass
 
+from sqlalchemy.orm import Session
+
+from app.models.job_source import JobSource
+
 
 @dataclass(frozen=True)
 class SourceConfig:
@@ -45,6 +49,48 @@ SOURCE_CONFIGS = {
         check_interval_minutes=30,
     ),
 }
+
+
+def ensure_configured_sources(
+    db: Session,
+) -> int:
+    """
+    Ensure every configured official source has a database row.
+
+    The operation is idempotent and allows newly added adapters,
+    such as KPSC, to become active without manual SQL inserts.
+    """
+
+    created = 0
+
+    for config in SOURCE_CONFIGS.values():
+        existing = (
+            db.query(JobSource)
+            .filter(JobSource.name == config.name)
+            .one_or_none()
+        )
+
+        if existing is not None:
+            continue
+
+        db.add(
+            JobSource(
+                name=config.name,
+                base_url=config.base_url,
+                source_type=config.source_type,
+                is_active=True,
+                check_interval_minutes=(
+                    config.check_interval_minutes
+                ),
+            )
+        )
+
+        created += 1
+
+    if created:
+        db.commit()
+
+    return created
 
 
 def get_source_config(
