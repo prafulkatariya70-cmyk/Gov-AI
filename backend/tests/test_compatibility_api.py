@@ -245,7 +245,9 @@ def test_jobs_profile_categories_and_ingestion_status(client):
     )
 
     assert status.status_code == 200
-    assert status.json()["jobs_count"] == 1
+    # Ingestion status counts all persisted job records, including
+    # expired and closed history that the public feed intentionally hides.
+    assert status.json()["jobs_count"] == 5
     assert status.json()["sources"][0]["name"] == "SSC"
 
 
