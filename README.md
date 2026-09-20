@@ -1,3 +1,4 @@
+<<<<<<< ours
 \# GovCareer AI
 
 
@@ -66,3 +67,7 @@ LLM-powered career and notification intelligence
 
 🚧 Under Development
 
+||||||| base
+=======
+# Here are your Instructions
+>>>>>>> theirs

@@ -1,0 +1,161 @@
+{
+  "app_name": "SarkariSeva AI",
+  "personality": "3 Editorial Mobile (with iOS-Native Clean structure)",
+  "personality_one_liner": "An authoritative, trustworthy, and content-led editorial guide for Central and State government job aspirants in India.",
+  "color": {
+    "surface": "#FAF8F5",
+    "onSurface": "#1C1917",
+    "surfaceSecondary": "#F5F2EB",
+    "onSurfaceSecondary": "#292524",
+    "surfaceTertiary": "#EAE5DC",
+    "onSurfaceTertiary": "#44403C",
+    "surfaceInverse": "#1C1917",
+    "onSurfaceInverse": "#FAF8F5",
+    "brand": "#9A3412",
+    "brandPrimary": "#9A3412",
+    "onBrandPrimary": "#FAF8F5",
+    "brandSecondary": "#C2410C",
+    "onBrandSecondary": "#FAF8F5",
+    "brandTertiary": "#FFEDD5",
+    "onBrandTertiary": "#7C2D12",
+    "success": "#166534",
+    "onSuccess": "#F0FDF4",
+    "warning": "#B45309",
+    "onWarning": "#FFFBEB",
+    "error": "#991B1B",
+    "onError": "#FEF2F2",
+    "info": "#1E40AF",
+    "onInfo": "#EFF6FF",
+    "border": "#E7E2D8",
+    "borderStrong": "#D6CBD0",
+    "divider": "#EFECE6",
+    "muted": "#78716C",
+    "onBrand": "#FAF8F5"
+  },
+  "typography": {
+    "displayFontFamily": "Playfair Display",
+    "textFontFamily": "Satoshi",
+    "scale": {
+      "sm": 12,
+      "base": 14,
+      "lg": 16,
+      "xl": 20,
+      "2xl": 24
+    }
+  },
+  "spacing": {
+    "rule": "Generous magazine-like vertical rhythm with editorial breathing room and touch targets >= 44pt",
+    "xs": 4,
+    "sm": 8,
+    "md": 12,
+    "lg": 16,
+    "xl": 24,
+    "2xl": 32,
+    "3xl": 48
+  },
+  "radius_tokens": {
+    "sm": 6,
+    "md": 12,
+    "lg": 20,
+    "pill": 999
+  },
+  "shadow_tier": "1",
+  "navigation": "bottom_tabs",
+  "icon_set": "Ionicons",
+  "glassmorphism": {
+    "enabled": false,
+    "do's": [
+      "Use editorial paper surfaces and clean thin 1pt borders",
+      "Prioritize typography hierarchy and matching match-score badges"
+    ],
+    "dont's": [
+      "Avoid heavy drop shadows and glass blurs which clash with editorial warmth"
+    ]
+  },
+  "platform_libraries": {
+    "glass": {
+      "ios": "expo-glass-effect",
+      "android": "expo-blur",
+      "low_end_android_fallback": "solid surfaceSecondary"
+    },
+    "image": "expo-image",
+    "blur": "expo-blur",
+    "bottom_sheet": "@gorhom/bottom-sheet",
+    "animation": "react-native-reanimated",
+    "gesture": "react-native-gesture-handler"
+  },
+  "screens": [
+    {
+      "name": "HomeFeed",
+      "purpose": "Daily live feed of Central & State government job openings with personalized eligibility match score.",
+      "states": {
+        "loading": "Centered warm amber spinner with tip of the day",
+        "empty": "Warm illustrated empty state with search reset CTA",
+        "error": "Error banner with retry button and offline fallback cache"
+      },
+      "layout": "Editorial header with greeting and streak counter, category pills (UPSC, SSC, Banking, Railways, State PSC), featured high-match job card, and chronological live job feed with match percentage badges."
+    },
+    {
+      "name": "EligibilityProfile",
+      "purpose": "Candidate qualification, age, domicile state, and category profile for automated match calculation.",
+      "states": {
+        "loading": "Skeleton profile loader",
+        "empty": "Prompt to complete qualification details",
+        "error": "Save failure error state with retry"
+      },
+      "layout": "Single column form with structured sections: Age & DOB with automatic relaxation calculation, Education Degree selector, Domicile State picker, and Category/Reservation (SC/ST/OBC/EWS/General)."
+    },
+    {
+      "name": "JobDetail",
+      "purpose": "Detailed job specification, official notification PDF reader, eligibility breakdown, and direct apply link.",
+      "states": {
+        "loading": "Job details skeleton loader",
+        "empty": "Job listing not found or expired",
+        "error": "Network error loading notification document"
+      },
+      "layout": "Hero banner with government board seal, match breakdown meter (Age, Qualification, Domicile), key dates timeline (Opening, Closing, Exam Date), Official PDF preview trigger, and sticky bottom Apply CTA."
+    },
+    {
+      "name": "ExamCalendar",
+      "purpose": "Comprehensive timeline of application deadlines, admit card releases, and upcoming exam dates.",
+      "states": {
+        "loading": "Calendar event skeleton",
+        "empty": "No exams scheduled for selected month",
+        "error": "Failed to sync calendar"
+      },
+      "layout": "Month picker header, timeline view with category color-coding, reminder toggle per exam, and quick-filter tabs for Deadlines vs Exams."
+    },
+    {
+      "name": "DailyCapsule",
+      "purpose": "Habit-forming daily check-in with current affairs, GK bytes, and previous year question capsules.",
+      "states": {
+        "loading": "Loading daily briefing",
+        "empty": "Capsule not available yet",
+        "error": "Unable to fetch current affairs"
+      },
+      "layout": "Streak counter hero card, daily check-in reward badge, bite-sized current affairs cards with bookmark action, and interactive daily GK quiz."
+    },
+    {
+      "name": "ApplicationPipeline",
+      "purpose": "Track status of bookmarked jobs, submitted applications, admit cards, and results.",
+      "states": {
+        "loading": "Pipeline skeleton",
+        "empty": "No saved applications or bookmarks yet",
+        "error": "Error fetching user pipeline"
+      },
+      "layout": "Segmented status tabs (Saved, Applied, Admit Card, Result), Kanban-style or vertical status cards with progress steps, and quick action notes."
+    }
+  ],
+  "images": {
+    "hero_library": {
+      "url": "https://images.unsplash.com/photo-1762857995550-1fc51c8fbf2d",
+      "dark": "https://images.unsplash.com/photo-1762857995550-1fc51c8fbf2d",
+      "alt": "Library desk study atmosphere for exam prep"
+    },
+    "govt_seal": {
+      "url": "https://images.unsplash.com/photo-1675855547764-2b29a996824f",
+      "alt": "Official government seal emblem motif"
+    }
+  },
+  "instructions_to_main_agent": "Build SarkariSeva AI with editorial paper palette (#FAF8F5 surface, terracotta brand #9A3412), Playfair Display headings and Satoshi body text. Ensure all touch targets are >= 44pt, safe areas are strictly respected at screen roots, and every branded entity or board features a clear status and match badge. Implement the sticky bottom CTA on JobDetail and ensure loading/empty/error states are handled across all 6 screens."
+}
