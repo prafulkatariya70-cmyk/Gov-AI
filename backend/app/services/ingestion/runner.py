@@ -5,6 +5,9 @@ from sqlalchemy.orm import Session
 from app.models.ingestion_run import IngestionRun
 from app.models.job_source import JobSource
 from app.services.ingestion.registry import get_adapter
+from app.services.ingestion.source_config import (
+    ensure_configured_sources,
+)
 from app.services.ingestion.source_monitor import (
     get_sources_due_for_check,
 )
@@ -104,6 +107,8 @@ def run_due_sources(
     """
     Run ingestion for every active source that is due.
     """
+
+    ensure_configured_sources(db)
 
     sources = get_sources_due_for_check(
         db
