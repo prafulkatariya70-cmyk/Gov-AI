@@ -2,6 +2,7 @@ from app.services.ingestion.base_adapter import JobSourceAdapter
 from app.services.ingestion.karnataka_teacher_adapter import (
     KarnatakaTeacherAdapter,
 )
+from app.services.ingestion.kpsc_adapter import KPSCAdapter
 from app.services.ingestion.rrb_adapter import RRBAdapter
 from app.services.ingestion.ssc_adapter import SSCAdapter
 from app.services.ingestion.upsc_adapter import UPSCAdapter
@@ -12,6 +13,7 @@ ADAPTER_REGISTRY: dict[str, type[JobSourceAdapter]] = {
     "SSC": SSCAdapter,
     "RRB": RRBAdapter,
     "KARNATAKA_TEACHER": KarnatakaTeacherAdapter,
+    "KPSC": KPSCAdapter,
 }
 
 
