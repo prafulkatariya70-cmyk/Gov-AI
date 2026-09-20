@@ -6,3 +6,4 @@ from app.models.job_eligibility import JobEligibility
 from app.models.job_source import JobSource
 from app.models.ingestion_run import IngestionRun
 from app.models.application import Application
+from app.models.job_source_registry import JobSourceRegistry
