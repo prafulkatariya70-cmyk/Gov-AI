@@ -5,6 +5,7 @@ from datetime import date, datetime
 from urllib.parse import urljoin
 
 import httpx
+import requests
 from bs4 import BeautifulSoup
 
 from app.services.documents.extractor import PDFTextExtractor
@@ -103,18 +104,15 @@ class KPSCAdapter(JobSourceAdapter):
             "Referer": KPSC_BASE_URL,
         }
 
-        timeout = httpx.Timeout(
-            connect=30.0,
-            read=60.0,
-            write=30.0,
-            pool=30.0,
-        )
-
-        response = httpx.get(
+        # KPSC currently returns a malformed HTTP header
+        # (X-XSS-Protection has whitespace before the colon) that
+        # strict httpx/httpcore rejects before the body can be read.
+        # Use the existing requests dependency for this legacy endpoint.
+        response = requests.get(
             KPSC_NOTIFICATION_URL,
             headers=headers,
-            timeout=timeout,
-            follow_redirects=True,
+            timeout=(30.0, 60.0),
+            allow_redirects=True,
         )
         response.raise_for_status()
         return response.text
