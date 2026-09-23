@@ -1,8 +1,17 @@
 import os
+
+import pytest
 import requests
 
+pytestmark = pytest.mark.integration
+
 BASE_URL = os.environ.get("EXPO_BACKEND_URL") or os.environ.get("EXPO_PUBLIC_BACKEND_URL")
-assert BASE_URL, "EXPO_BACKEND_URL/EXPO_PUBLIC_BACKEND_URL must be configured"
+if not BASE_URL:
+    pytest.skip(
+        "Portal integration tests require EXPO_BACKEND_URL or EXPO_PUBLIC_BACKEND_URL.",
+        allow_module_level=True,
+    )
+
 BASE_URL = BASE_URL.rstrip("/")
 USER = "demo_candidate"
 
