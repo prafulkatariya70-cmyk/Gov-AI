@@ -12,7 +12,11 @@ const API_BASE = `${BACKEND_URL}/api`;
 
 const DEFAULT_USER_ID = "demo_candidate";
 
-async function request<T>(endpoint: string, options?: RequestInit): Promise<T> {
+async function request<T>(
+  endpoint: string,
+  options?: RequestInit,
+  config?: { suppressStatuses?: number[] }
+): Promise<T> {
   const url = `${API_BASE}${endpoint}`;
   try {
     const response = await fetch(url, {
@@ -31,7 +35,15 @@ async function request<T>(endpoint: string, options?: RequestInit): Promise<T> {
 
     return await response.json();
   } catch (error: any) {
-    console.error(`[API Error] ${endpoint}:`, error);
+    const statusMatch = String(error?.message || "").match(/^API error (\\d+):/);
+    const statusCode = statusMatch ? Number(statusMatch[1]) : undefined;
+    const shouldSuppress =
+      statusCode !== undefined &&
+      (config?.suppressStatuses || []).includes(statusCode);
+
+    if (!shouldSuppress) {
+      console.error(`[API Error] ${endpoint}:`, error);
+    }
     throw error;
   }
 }
@@ -164,7 +176,11 @@ export const api = {
     selected: ApplicationTrackerItem[];
   }> {
     try {
-      return await request(`/tracker?user_id=${user_id}`);
+      return await request(
+        `/tracker?user_id=${user_id}`,
+        undefined,
+        { suppressStatuses: [404] }
+      );
     } catch (error: any) {
       if (String(error?.message || "").includes("API error 404")) {
         return {
@@ -219,7 +235,11 @@ export const api = {
     is_checked_in_today: boolean;
   }> {
     try {
-      return await request(`/daily-capsule?user_id=${user_id}`);
+      return await request(
+        `/daily-capsule?user_id=${user_id}`,
+        undefined,
+        { suppressStatuses: [404] }
+      );
     } catch (error: any) {
       if (String(error?.message || "").includes("API error 404")) {
         return {
