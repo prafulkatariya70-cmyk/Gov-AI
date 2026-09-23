@@ -90,22 +90,22 @@ export const defaultScheme = "light" satisfies ColorScheme;
 export const themes: { light: ThemeColors; dark: ThemeColors } = { light, dark };
 
 export function setColorScheme(scheme: ColorScheme | null) {
-  Appearance.setColorScheme?.(scheme);
+  Appearance.setColorScheme?.(scheme ?? "light");
 }
 
 setColorScheme?.(defaultScheme);
 
 export function useTheme(): { scheme: ColorScheme; colors: ThemeColors } {
   const system = useColorScheme();
-  const scheme: ColorScheme = system && themes[system] ? system : defaultScheme;
-  return { scheme, colors: themes[scheme] ?? themes.light };
+  const scheme: ColorScheme = system === "dark" ? "dark" : "light";
+  return { scheme, colors: themes[scheme] };
 }
 
-export function makeStyles<T extends StyleSheet.NamedStyles<T> | StyleSheet.NamedStyles<any>>(
-  factory: (colors: ThemeColors) => T & StyleSheet.NamedStyles<any>,
+export function makeStyles<T extends Record<string, any>>(
+  factory: (colors: ThemeColors) => T,
 ): () => T {
   return function useStyles(): T {
     const { colors } = useTheme();
-    return useMemo(() => StyleSheet.create(factory(colors)), [colors]);
+    return useMemo(() => StyleSheet.create(factory(colors)) as T, [colors]);
   };
 }
