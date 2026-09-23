@@ -312,7 +312,7 @@ export const api = {
         board_code: job.source_name || job.organization_name, event_type: "Application Deadline",
         date: String(job.application_end),
         job_type: ["KARNATAKA_TEACHER", "KPSC"].includes(job.source_name || "") ? "State" : "Central",
-        state: job.source_name === "KARNATAKA_TEACHER" ? "Karnataka" : "All India",
+        state: ["KARNATAKA_TEACHER", "KPSC"].includes(job.source_name || "") ? "Karnataka" : "All India",
         official_url: job.official_url, status: job.status,
       }));
     return { count: events.length, events };
