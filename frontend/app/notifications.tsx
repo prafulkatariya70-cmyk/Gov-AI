@@ -67,7 +67,7 @@ export default function NotificationsScreen() {
           <View style={{ flex: 1 }}>
             <Text style={styles.bannerTitle}>Real-time Official Synchronizer</Text>
             <Text style={styles.bannerSub}>
-              Directly synced with Employment News, Central Ministries & State Gazettes.
+              Showing current jobs discovered from connected official government sources.
             </Text>
           </View>
         </View>
