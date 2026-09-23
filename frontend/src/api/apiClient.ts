@@ -71,7 +71,10 @@ function calculateAge(dateOfBirth: string): number {
 }
 
 function mapJob(item: ModernJob, matchInfo?: any): Job {
-  const isState = item.source_name === "KARNATAKA_TEACHER" || Boolean(item.source_name?.startsWith("STATE_"));
+  const isState =
+    item.source_name === "KARNATAKA_TEACHER" ||
+    item.source_name === "KPSC" ||
+    Boolean(item.source_name?.startsWith("STATE_"));
   const qualification = item.eligibility?.degree || item.eligibility?.education_level || "See official notification";
   return {
     id: String(item.id), title: item.title, slug: String(item.id), board: item.organization_name,
@@ -307,7 +310,7 @@ export const api = {
         id: "deadline-" + job.id, job_id: String(job.id), title: job.title,
         board_code: job.source_name || job.organization_name, event_type: "Application Deadline",
         date: String(job.application_end),
-        job_type: job.source_name === "KARNATAKA_TEACHER" ? "State" : "Central",
+        job_type: ["KARNATAKA_TEACHER", "KPSC"].includes(job.source_name || "") ? "State" : "Central",
         state: job.source_name === "KARNATAKA_TEACHER" ? "Karnataka" : "All India",
         official_url: job.official_url, status: job.status,
       }));
