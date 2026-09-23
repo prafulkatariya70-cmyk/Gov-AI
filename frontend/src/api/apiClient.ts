@@ -35,7 +35,7 @@ async function request<T>(
 
     return await response.json();
   } catch (error: any) {
-    const statusMatch = String(error?.message || "").match(/^API error (\\d+):/);
+    const statusMatch = String(error?.message || "").match(/^API error (\d+):/);
     const statusCode = statusMatch ? Number(statusMatch[1]) : undefined;
     const shouldSuppress =
       statusCode !== undefined &&
