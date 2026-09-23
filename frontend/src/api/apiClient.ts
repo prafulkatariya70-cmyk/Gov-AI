@@ -344,6 +344,7 @@ export const api = {
           user_streak: 0,
           user_points: 0,
           is_checked_in_today: false,
+          available: false,
         };
       }
       throw error;
