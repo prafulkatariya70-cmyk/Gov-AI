@@ -161,8 +161,9 @@ export const api = {
         [job.title, job.board, job.board_code].join(" ").toLowerCase().includes(term)
       );
     }
-    if (params?.category && categoryTerms[params.category]) {
-      jobs = jobs.filter((job) => matchesTerms(job, categoryTerms[params.category]));
+    const selectedCategory = params?.category;
+    if (selectedCategory && categoryTerms[selectedCategory]) {
+      jobs = jobs.filter((job) => matchesTerms(job, categoryTerms[selectedCategory]));
     }
     if (params?.job_type && params.job_type !== "All Types") {
       jobs = jobs.filter((job) => job.job_type === params.job_type);
