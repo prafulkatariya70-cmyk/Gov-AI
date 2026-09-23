@@ -225,7 +225,7 @@ const useStyles = makeStyles((colors) => ({
   },
   topMetaRow: {
     flexDirection: "row",
-    justifyContent: "space-in-between",
+    justifyContent: "space-between",
     alignItems: "center",
     marginBottom: 8,
   },
