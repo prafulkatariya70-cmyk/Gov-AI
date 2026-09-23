@@ -69,6 +69,7 @@ export default function DailyCapsuleScreen() {
   const streakCount = capsuleData?.user_streak || 0;
   const userPoints = capsuleData?.user_points || 0;
   const isCheckedIn = capsuleData?.is_checked_in_today || false;
+  const dailyAvailable = capsuleData?.available !== false;
 
   const handleSelectOption = (questionId: string, optionIndex: number) => {
     if (quizSubmitted) return;
@@ -127,7 +128,7 @@ export default function DailyCapsuleScreen() {
             </Text>
           </View>
 
-          {!isCheckedIn ? (
+          {dailyAvailable && !isCheckedIn ? (
             <Pressable
               testID="claim-daily-streak-btn"
               style={styles.checkinActionBtn}
