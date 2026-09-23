@@ -318,7 +318,7 @@ export default function HomeScreen() {
         ListHeaderComponent={
           <View>
             {/* Daily Habit Streak Card */}
-            {streakData && (
+            {streakData?.available !== false && streakData && (
               <DailyStreakCard
                 streakCount={streakData.user_streak}
                 points={streakData.user_points}
