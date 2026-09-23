@@ -320,6 +320,7 @@ export const api = {
     user_streak: number;
     user_points: number;
     is_checked_in_today: boolean;
+    available?: boolean;
   }> {
     try {
       return await request(
@@ -387,10 +388,18 @@ export const api = {
     total_notifications: number;
     categories: CategorySummaryItem[];
   }> {
-    return request<{
-      total_active_vacancies: number;
-      total_notifications: number;
-      categories: CategorySummaryItem[];
-    }>("/categories-summary");
+    const response = await request<any[]>("/categories-summary");
+    const categories: CategorySummaryItem[] = response.map((item) => ({
+      name: item.opportunity_type,
+      code: item.opportunity_type,
+      icon: "briefcase",
+      count: Number(item.count || 0),
+      vacancies: 0,
+    }));
+    return {
+      total_active_vacancies: 0,
+      total_notifications: categories.reduce((sum, item) => sum + item.count, 0),
+      categories,
+    };
   },
 };
