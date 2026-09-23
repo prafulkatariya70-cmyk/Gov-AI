@@ -63,9 +63,54 @@ export const api = {
     searchParams.append("user_id", params?.user_id || DEFAULT_USER_ID);
 
     const queryStr = searchParams.toString();
-    return request<{ count: number; jobs: Job[]; candidate_summary: any }>(
-      `/jobs${queryStr ? `?${queryStr}` : ""}`
-    );
+    const response = await request<{
+      items: any[];
+      total: number;
+      page: number;
+      limit: number;
+    }>(`/jobs${queryStr ? `?${queryStr}` : ""}`);
+
+    const jobs: Job[] = response.items.map((item) => ({
+      id: String(item.id),
+      title: item.title,
+      slug: String(item.id),
+      board: item.organization_name,
+      board_code: item.source_name || item.organization_name,
+      job_type: item.source_name === "KARNATAKA_TEACHER" ? "State" : "Central",
+      state: item.source_name === "KARNATAKA_TEACHER" ? "Karnataka" : "All India",
+      category: item.opportunity_type || "Government Jobs",
+      post_name: item.title,
+      total_vacancies: 0,
+      salary_scale: "See official notification",
+      in_hand_salary: "See official notification",
+      qualification_required: item.eligibility?.degree || item.eligibility?.education_level || "See official notification",
+      qualification_details: item.eligibility?.qualification_text || "See official notification",
+      min_age: item.eligibility?.minimum_age || 0,
+      max_age: item.eligibility?.maximum_age || 0,
+      domicile_rule: item.eligibility?.eligible_states || "See official notification",
+      gender_eligibility: "See official notification",
+      notification_date: item.application_start || item.created_at,
+      start_date: item.application_start || "",
+      last_date: item.application_end || "Not specified",
+      exam_date: "",
+      admit_card_date: "",
+      official_apply_url: item.official_url,
+      official_notification_pdf_url: item.notification_url || item.official_url,
+      official_website_url: item.official_url,
+      syllabus_overview: "See official notification",
+      is_featured: false,
+      is_new_today: false,
+      is_closing_soon: Boolean(item.is_closing_soon),
+      status: item.lifecycle_status || item.status,
+      tags: [item.source_name || "Government"],
+      created_at: item.created_at,
+    }));
+
+    return {
+      count: response.total,
+      jobs,
+      candidate_summary: null,
+    };
   },
 
   async getRecommendedJobs(user_id: string = DEFAULT_USER_ID): Promise<{
@@ -118,7 +163,21 @@ export const api = {
     exam_taken: ApplicationTrackerItem[];
     selected: ApplicationTrackerItem[];
   }> {
-    return request(`/tracker?user_id=${user_id}`);
+    try {
+      return await request(`/tracker?user_id=${user_id}`);
+    } catch (error: any) {
+      if (String(error?.message || "").includes("API error 404")) {
+        return {
+          all_tracked_count: 0,
+          saved: [],
+          applied: [],
+          admit_card: [],
+          exam_taken: [],
+          selected: [],
+        };
+      }
+      throw error;
+    }
   },
 
   async updateTrackerItem(
@@ -159,7 +218,25 @@ export const api = {
     user_points: number;
     is_checked_in_today: boolean;
   }> {
-    return request(`/daily-capsule?user_id=${user_id}`);
+    try {
+      return await request(`/daily-capsule?user_id=${user_id}`);
+    } catch (error: any) {
+      if (String(error?.message || "").includes("API error 404")) {
+        return {
+          capsule: {
+            date_str: new Date().toISOString().slice(0, 10),
+            theme: "Coming soon",
+            daily_quote: "Daily GK and current-affairs content is being connected.",
+            current_affairs: [],
+            quiz_questions: [],
+          },
+          user_streak: 0,
+          user_points: 0,
+          is_checked_in_today: false,
+        };
+      }
+      throw error;
+    }
   },
 
   async checkinDaily(user_id: string = DEFAULT_USER_ID): Promise<{
