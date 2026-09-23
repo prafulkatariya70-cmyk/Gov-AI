@@ -101,10 +101,10 @@ export function useTheme(): { scheme: ColorScheme; colors: ThemeColors } {
   return { scheme, colors: themes[scheme] };
 }
 
-export function makeStyles(
-  factory: (colors: ThemeColors) => StyleSheet.NamedStyles<any>,
-): () => StyleSheet.NamedStyles<any> {
-  return function useStyles(): StyleSheet.NamedStyles<any> {
+export function makeStyles<T extends StyleSheet.NamedStyles<T>>(
+  factory: (colors: ThemeColors) => T,
+): () => T {
+  return function useStyles(): T {
     const { colors } = useTheme();
     return useMemo(() => StyleSheet.create(factory(colors)), [colors]);
   };
