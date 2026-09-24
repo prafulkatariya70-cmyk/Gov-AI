@@ -1,3 +1,4 @@
+import os
 from datetime import datetime
 
 from apscheduler.schedulers.background import BackgroundScheduler
@@ -46,7 +47,15 @@ def scheduled_ingestion() -> None:
 def start_scheduler() -> None:
     """
     Start the background ingestion scheduler.
+
+    Vercel runs FastAPI as serverless functions, so persistent APScheduler
+    workers are intentionally disabled there. Scheduled ingestion is handled
+    by GitHub Actions in the deployed environment.
     """
+
+    if os.getenv("VERCEL") == "1":
+        print("Government job ingestion scheduler disabled on Vercel.")
+        return
 
     if scheduler.running:
         return
