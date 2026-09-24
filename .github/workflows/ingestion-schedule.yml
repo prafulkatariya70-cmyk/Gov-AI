@@ -1,0 +1,35 @@
+name: Government Job Ingestion
+
+on:
+  schedule:
+    - cron: "*/30 * * * *"
+  workflow_dispatch:
+
+jobs:
+  ingest:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    env:
+      DATABASE_USER: ${{ secrets.DATABASE_USER }}
+      DATABASE_PASSWORD: ${{ secrets.DATABASE_PASSWORD }}
+      DATABASE_HOST: ${{ secrets.DATABASE_HOST }}
+      DATABASE_PORT: ${{ secrets.DATABASE_PORT }}
+      DATABASE_NAME: ${{ secrets.DATABASE_NAME }}
+      PYTHONPATH: backend
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: Install Tesseract
+        run: sudo apt-get update && sudo apt-get install -y tesseract-ocr
+
+      - name: Install dependencies
+        run: python -m pip install --upgrade pip && pip install -r backend/requirements.txt
+
+      - name: Run due government-source ingestion
+        run: python -c "from app.db.session import SessionLocal; from app.services.ingestion.runner import run_due_sources; db=SessionLocal(); results=run_due_sources(db); print('Sources processed:', len(results)); [print(f'Run {r.id} | Source {r.source_id} | Status {r.status} | Discovered {r.discovered} | Created {r.created} | Updated {r.updated} | Failed {r.failed}') for r in results]; db.close()"
