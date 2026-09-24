@@ -2,7 +2,7 @@
 
 from datetime import date, datetime
 
-from fastapi import APIRouter, Depends, HTTPException, Query, status
+from fastapi import APIRouter, Depends, Header, HTTPException, Query, status
 from pydantic import BaseModel, ConfigDict, Field
 from sqlalchemy import func, or_
 from sqlalchemy.orm import Session
@@ -33,8 +33,34 @@ def get_db():
         db.close()
 
 
-def get_development_user(db: Session = Depends(get_db)) -> User:
-    """Temporary server-configured identity until Phase 4 authentication."""
+def get_development_user(
+    db: Session = Depends(get_db),
+    client_id: str | None = Header(default=None, alias="X-Client-ID"),
+) -> User:
+    """Resolve a stable anonymous app identity until full authentication is added."""
+    if client_id:
+        normalized = client_id.strip()
+        if len(normalized) < 16 or len(normalized) > 128:
+            raise HTTPException(
+                status_code=status.HTTP_400_BAD_REQUEST,
+                detail="Invalid client identity.",
+            )
+        email = f"{normalized}@anonymous.govcareer.local"
+        user = (
+            db.query(User)
+            .filter(User.email == email)
+            .one_or_none()
+        )
+        if user is None:
+            user = User(
+                email=email,
+                password_hash="anonymous-client",
+            )
+            db.add(user)
+            db.commit()
+            db.refresh(user)
+        return user
+
     user = (
         db.query(User)
         .filter(
