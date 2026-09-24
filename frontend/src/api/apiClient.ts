@@ -1,3 +1,5 @@
+import AsyncStorage from "@react-native-async-storage/async-storage";
+
 import {
   Job,
   CandidateProfile,
@@ -11,6 +13,18 @@ const BACKEND_URL = process.env.EXPO_PUBLIC_BACKEND_URL || process.env.EXPO_BACK
 const API_BASE = `${BACKEND_URL}/api`;
 
 const DEFAULT_USER_ID = "demo_candidate";
+const CLIENT_ID_KEY = "govcareer_client_id";
+
+async function getClientId(): Promise<string> {
+  const existing = await AsyncStorage.getItem(CLIENT_ID_KEY);
+  if (existing) return existing;
+  const generated =
+    typeof globalThis.crypto?.randomUUID === "function"
+      ? globalThis.crypto.randomUUID()
+      : "client-" + Math.random().toString(36).slice(2) + Date.now().toString(36);
+  await AsyncStorage.setItem(CLIENT_ID_KEY, generated);
+  return generated;
+}
 
 async function request<T>(
   endpoint: string,
@@ -19,11 +33,13 @@ async function request<T>(
 ): Promise<T> {
   const url = `${API_BASE}${endpoint}`;
   try {
+    const clientId = await getClientId();
     const response = await fetch(url, {
       ...options,
       headers: {
         "Content-Type": "application/json",
         Accept: "application/json",
+        "X-Client-ID": clientId,
         ...(options?.headers || {}),
       },
     });
