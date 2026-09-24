@@ -8,13 +8,17 @@ from app.core.config import settings
 
 
 if os.getenv("VERCEL") == "1":
-    # Vercel functions are short-lived/serverless. Avoid keeping a local
-    # SQLAlchemy pool per warm function instance; Supabase's pooler handles
-    # connection reuse across instances.
+    # Vercel functions are short-lived/serverless. Supabase recommends the
+    # transaction pooler for this workload; disable psycopg prepared
+    # statements because transaction pooling does not support them.
     engine = create_engine(
         settings.database_url,
         poolclass=NullPool,
         pool_pre_ping=True,
+        connect_args={
+            "prepare_threshold": None,
+            "sslmode": "require",
+        },
     )
 else:
     engine = create_engine(
