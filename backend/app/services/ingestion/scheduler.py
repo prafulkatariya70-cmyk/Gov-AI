@@ -1,3 +1,5 @@
+from datetime import datetime
+
 from apscheduler.schedulers.background import BackgroundScheduler
 
 from app.db.session import SessionLocal
@@ -49,8 +51,18 @@ def start_scheduler() -> None:
     if scheduler.running:
         return
 
-    # Run once immediately when the backend starts.
-    scheduled_ingestion()
+    # Start the scheduler before the first ingestion so a slow/unavailable
+    # government source can never block FastAPI startup or health checks.
+    scheduler.start()
+
+    # Queue the first ingestion immediately on the scheduler's worker thread.
+    scheduler.add_job(
+        scheduled_ingestion,
+        "date",
+        run_date=datetime.now(),
+        id="government_job_ingestion_initial",
+        replace_existing=True,
+    )
 
     # Continue checking every 30 minutes.
     scheduler.add_job(
@@ -62,8 +74,6 @@ def start_scheduler() -> None:
         max_instances=1,
         coalesce=True,
     )
-
-    scheduler.start()
 
     print(
         "Government job ingestion scheduler started."
