@@ -13,6 +13,7 @@ from app.db.session import SessionLocal
 from app.models.application import Application
 from app.models.ingestion_run import IngestionRun
 from app.models.job import Job
+from app.models.job_eligibility import JobEligibility
 from app.models.job_source import JobSource
 from app.models.user import User
 from app.models.user_profile import UserProfile
@@ -304,9 +305,10 @@ def list_jobs(
     ),
     source_name: str | None = None,
     opportunity_type: str | None = None,
+    eligible_state: str | None = None,
     page: int = Query(default=1, ge=1),
     limit: int = Query(default=20, ge=1, le=100),
-    response: Response = None,
+    response: Response,
     db: Session = Depends(get_db),
 ):
     query = db.query(Job).filter(
@@ -331,6 +333,12 @@ def list_jobs(
     if opportunity_type:
         query = query.filter(
             Job.opportunity_type == opportunity_type
+        )
+
+    if eligible_state:
+        state_term = f"%{eligible_state.strip()}%"
+        query = query.outerjoin(JobEligibility, JobEligibility.job_id == Job.id).filter(
+            JobEligibility.eligible_states.ilike(state_term)
         )
 
     total = query.count()
