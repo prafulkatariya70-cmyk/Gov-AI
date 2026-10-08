@@ -477,6 +477,7 @@ def recommended_jobs(
 
     jobs = (
         query
+        .options(selectinload(Job.eligibility))
         .order_by(Job.application_end.asc().nullslast())
         .limit(50)
         .all()
