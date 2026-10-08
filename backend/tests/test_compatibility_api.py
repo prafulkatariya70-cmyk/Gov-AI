@@ -176,6 +176,7 @@ def test_jobs_profile_categories_and_ingestion_status(client):
     )
 
     assert jobs.status_code == 200
+    assert jobs.headers["Cache-Control"].startswith("public, s-maxage=30")
     assert jobs.json()["total"] == 1
     assert jobs.json()["items"][0]["id"] == job_id
 
@@ -198,6 +199,7 @@ def test_jobs_profile_categories_and_ingestion_status(client):
     )
 
     assert detail.status_code == 200
+    assert detail.headers["Cache-Control"].startswith("public, s-maxage=60")
     assert (
         detail.json()["organization_name"]
         == "Staff Selection Commission"
@@ -249,6 +251,7 @@ def test_jobs_profile_categories_and_ingestion_status(client):
     # expired and closed history that the public feed intentionally hides.
     assert status.json()["jobs_count"] == 5
     assert status.json()["sources"][0]["name"] == "SSC"
+    assert status.json()["sources"][0]["base_url"] == "https://example.gov"
 
 
 def test_recommendations_eligibility_and_application_lifecycle(client):
