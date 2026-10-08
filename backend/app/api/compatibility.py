@@ -6,7 +6,7 @@ from fastapi import APIRouter, Depends, Header, HTTPException, Query, Response, 
 import jwt
 from pydantic import BaseModel, ConfigDict, Field
 from sqlalchemy import func, or_
-from sqlalchemy.orm import Session
+from sqlalchemy.orm import Session, selectinload
 
 from app.api.eligibility import evaluate_job_eligibility
 from app.core.config import settings
