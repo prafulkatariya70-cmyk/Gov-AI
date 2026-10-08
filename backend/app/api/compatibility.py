@@ -717,6 +717,7 @@ def calendar(
     response_model=list[CategorySummaryResponse],
 )
 def categories_summary(
+    response: Response,
     db: Session = Depends(get_db),
 ):
     """
@@ -741,6 +742,10 @@ def categories_summary(
         .order_by(Job.opportunity_type)
         .all()
     )
+
+    cache = "public, s-maxage=60, stale-while-revalidate=300, stale-if-error=900"
+    response.headers["Cache-Control"] = cache
+    response.headers["CDN-Cache-Control"] = cache
 
     return [
         CategorySummaryResponse(
