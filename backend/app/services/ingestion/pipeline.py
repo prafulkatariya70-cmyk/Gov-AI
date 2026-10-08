@@ -79,7 +79,10 @@ def _parse_and_save_eligibility(
             notification_url,
         )
 
-        if not fetched_document:
+        if not fetched_document or not fetched_document.success:
+            return "failed"
+
+        if not fetched_document.content:
             return "failed"
 
         # ------------------------------------------------------------

@@ -245,6 +245,16 @@ class IngestionSourceStatus(BaseModel):
     last_checked_at: datetime | None = None
     last_success_at: datetime | None = None
     last_error: str | None = None
+    latest_run_id: int | None = None
+    latest_run_status: str | None = None
+    latest_run_started_at: datetime | None = None
+    latest_run_finished_at: datetime | None = None
+    latest_run_discovered: int = 0
+    latest_run_created: int = 0
+    latest_run_updated: int = 0
+    latest_run_skipped: int = 0
+    latest_run_failed: int = 0
+    latest_run_error: str | None = None
 
 
 class IngestionStatusResponse(BaseModel):
@@ -636,15 +646,79 @@ def categories_summary(
 def ingestion_status(
     db: Session = Depends(get_db),
 ):
-    return IngestionStatusResponse(
-        sources=[
-            IngestionSourceStatus.model_validate(source)
-            for source in (
-                db.query(JobSource)
-                .order_by(JobSource.name)
-                .all()
+    sources = (
+        db.query(JobSource)
+        .order_by(JobSource.name)
+        .all()
+    )
+
+    # Ingestion runs already contain the detailed outcome for each source.
+    # Fetch only the newest run per source so the status endpoint can explain
+    # failures/recovery without adding another persistence table or migration.
+    latest_run_ids = (
+        db.query(
+            IngestionRun.source_id,
+            func.max(IngestionRun.id).label("latest_run_id"),
+        )
+        .group_by(IngestionRun.source_id)
+        .subquery()
+    )
+    latest_runs = (
+        db.query(IngestionRun)
+        .join(
+            latest_run_ids,
+            IngestionRun.id == latest_run_ids.c.latest_run_id,
+        )
+        .all()
+    )
+    runs_by_source = {
+        run.source_id: run
+        for run in latest_runs
+    }
+
+    source_statuses = []
+    for source in sources:
+        run = runs_by_source.get(source.id)
+        source_statuses.append(
+            IngestionSourceStatus(
+                **{
+                    **IngestionSourceStatus.model_validate(
+                        source
+                    ).model_dump(),
+                    "latest_run_id": run.id if run else None,
+                    "latest_run_status": (
+                        run.status if run else None
+                    ),
+                    "latest_run_started_at": (
+                        run.started_at if run else None
+                    ),
+                    "latest_run_finished_at": (
+                        run.finished_at if run else None
+                    ),
+                    "latest_run_discovered": (
+                        run.discovered if run else 0
+                    ),
+                    "latest_run_created": (
+                        run.created if run else 0
+                    ),
+                    "latest_run_updated": (
+                        run.updated if run else 0
+                    ),
+                    "latest_run_skipped": (
+                        run.skipped if run else 0
+                    ),
+                    "latest_run_failed": (
+                        run.failed if run else 0
+                    ),
+                    "latest_run_error": (
+                        run.error_message if run else None
+                    ),
+                }
             )
-        ],
+        )
+
+    return IngestionStatusResponse(
+        sources=source_statuses,
         latest_run_at=db.query(
             func.max(IngestionRun.finished_at)
         ).scalar(),

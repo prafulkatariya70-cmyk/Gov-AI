@@ -68,3 +68,40 @@ def test_kpsc_url_id_is_deterministic():
         KPSCAdapter()._build_url_id(url)
         == "kpsc-saad-rpc-notification-2026"
     )
+
+
+def test_kpsc_fetch_notification_page_streams_response(monkeypatch):
+    adapter = KPSCAdapter()
+    calls = {}
+
+    class FakeResponse:
+        encoding = "utf-8"
+
+        def raise_for_status(self):
+            pass
+
+        def iter_content(self, chunk_size):
+            calls["chunk_size"] = chunk_size
+            yield b"<html>"
+            yield b" KPSC notifications </html>"
+
+        def close(self):
+            calls["closed"] = True
+
+    def fake_get(*args, **kwargs):
+        calls["args"] = args
+        calls["kwargs"] = kwargs
+        return FakeResponse()
+
+    monkeypatch.setattr(
+        "app.services.ingestion.kpsc_adapter.requests.get",
+        fake_get,
+    )
+
+    html = adapter._fetch_notification_page()
+
+    assert html == "<html> KPSC notifications </html>"
+    assert calls["kwargs"]["stream"] is True
+    assert calls["kwargs"]["timeout"] == (15.0, 20.0)
+    assert calls["chunk_size"] == 16384
+    assert calls["closed"] is True
