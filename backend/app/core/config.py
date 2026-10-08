@@ -14,6 +14,8 @@ class Settings(BaseSettings):
     database_port: int = 5432
     database_name: str = "govcareer"
     compatibility_development_user_email: str = "development@govcareer.local"
+    supabase_url: str | None = None
+    compatibility_allow_anonymous: bool = True
 
     model_config = SettingsConfigDict(
         env_file=BASE_DIR / ".env",
