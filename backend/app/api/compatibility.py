@@ -373,6 +373,7 @@ def list_jobs(
 def recommended_jobs(
     db: Session = Depends(get_db),
     user: User = Depends(get_development_user),
+    limit: int = Query(default=20, ge=1, le=20),
 ):
     recommended = []
 
@@ -382,12 +383,51 @@ def recommended_jobs(
         "NOT_ELIGIBLE": 0,
     }
 
-    jobs = (
+    profile = (
+        db.query(UserProfile)
+        .filter(UserProfile.user_id == user.id)
+        .one_or_none()
+    )
+    if profile is None:
+        return []
+
+    query = (
         db.query(Job)
         .filter(
             *current_or_upcoming_filter(application_today())
         )
+    )
+
+    if profile.state:
+        state_term = f"%{profile.state.strip()}%"
+        query = query.outerjoin(
+            JobEligibility,
+            JobEligibility.job_id == Job.id,
+        ).filter(
+            or_(
+                JobEligibility.eligible_states.ilike(state_term),
+                JobEligibility.eligible_states.is_(None),
+            )
+        )
+
+    if profile.category:
+        category_term = f"%{profile.category.strip()}%"
+        if not profile.state:
+            query = query.outerjoin(
+                JobEligibility,
+                JobEligibility.job_id == Job.id,
+            )
+        query = query.filter(
+            or_(
+                JobEligibility.eligible_categories.ilike(category_term),
+                JobEligibility.eligible_categories.is_(None),
+            )
+        )
+
+    jobs = (
+        query
         .order_by(Job.application_end.asc().nullslast())
+        .limit(50)
         .all()
     )
 
@@ -414,7 +454,8 @@ def recommended_jobs(
             )
         )
 
-    return recommended
+    recommended.sort(key=lambda item: (-item.match_score, item.days_until_deadline if item.days_until_deadline is not None else 10**9))
+    return recommended[:limit]
 
 
 @router.get("/jobs/{job_id}", response_model=JobResponse)
