@@ -49,7 +49,23 @@ def run_source(
         ingestion_run.created = stats.created
         ingestion_run.updated = stats.updated
         ingestion_run.skipped = stats.skipped
-        ingestion_run.failed = stats.failed
+        ingestion_run.failed = (
+            stats.failed
+            + stats.eligibility_failed
+        )
+        ingestion_run.error_message = (
+            (
+                f"{stats.failed} job(s) failed during ingestion; "
+                if stats.failed
+                else ""
+            )
+            + (
+                f"{stats.eligibility_failed} notification(s) "
+                "failed eligibility processing."
+                if stats.eligibility_failed
+                else ""
+            )
+        ).strip() or None
         ingestion_run.finished_at = finished_at
 
         source.last_checked_at = finished_at
