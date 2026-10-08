@@ -103,29 +103,64 @@ class KPSCAdapter(JobSourceAdapter):
             "Referer": KPSC_BASE_URL,
         }
 
-        # KPSC currently returns a malformed HTTP header
-        # (X-XSS-Protection has whitespace before the colon) that
-        # strict httpx/httpcore rejects before the body can be read.
-        # Use the existing requests dependency for this legacy endpoint.
+        # KPSC is a legacy endpoint that can return malformed headers
+        # and may delay while the full response body is consumed.
+        # Stream the response so we can consume it incrementally and avoid
+        # a read timeout after a successful HTTP response.
+        max_bytes = 2 * 1024 * 1024
         last_error: Exception | None = None
 
         for attempt in range(3):
+            response = None
             try:
                 response = requests.get(
                     KPSC_NOTIFICATION_URL,
-                    headers=headers,
-                    timeout=(15.0, 25.0),
+                    headers={
+                        **headers,
+                        "Connection": "close",
+                    },
+                    timeout=(15.0, 20.0),
                     allow_redirects=True,
+                    stream=True,
                 )
                 response.raise_for_status()
-                return response.text
-            except requests.RequestException as exc:
+
+                chunks: list[bytes] = []
+                total_bytes = 0
+
+                for chunk in response.iter_content(chunk_size=16384):
+                    if not chunk:
+                        continue
+
+                    total_bytes += len(chunk)
+
+                    if total_bytes > max_bytes:
+                        raise RuntimeError(
+                            "KPSC notification page exceeded "
+                            f"{max_bytes} bytes."
+                        )
+
+                    chunks.append(chunk)
+
+                raw_body = b"".join(chunks)
+                encoding = response.encoding or "utf-8"
+
+                return raw_body.decode(
+                    encoding,
+                    errors="replace",
+                )
+
+            except (requests.RequestException, RuntimeError) as exc:
                 last_error = exc
 
                 if attempt < 2:
                     import time
 
                     time.sleep(2 * (attempt + 1))
+
+            finally:
+                if response is not None:
+                    response.close()
 
         raise RuntimeError(
             f"KPSC notification page unavailable after 3 attempts: "
