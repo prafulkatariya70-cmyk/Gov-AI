@@ -2,7 +2,7 @@
 
 from datetime import date, datetime
 
-from fastapi import APIRouter, Depends, Header, HTTPException, Query, status
+from fastapi import APIRouter, Depends, Header, HTTPException, Query, Response, status
 from pydantic import BaseModel, ConfigDict, Field
 from sqlalchemy import func, or_
 from sqlalchemy.orm import Session
@@ -240,6 +240,7 @@ class IngestionSourceStatus(BaseModel):
 
     id: int
     name: str
+    base_url: str
     health_status: str
     is_active: bool
     last_checked_at: datetime | None = None
@@ -305,6 +306,7 @@ def list_jobs(
     opportunity_type: str | None = None,
     page: int = Query(default=1, ge=1),
     limit: int = Query(default=20, ge=1, le=100),
+    response: Response = None,
     db: Session = Depends(get_db),
 ):
     query = db.query(Job).filter(
@@ -342,6 +344,11 @@ def list_jobs(
         .limit(limit)
         .all()
     )
+
+    if response is not None:
+        cache = "public, s-maxage=30, stale-while-revalidate=120, stale-if-error=600"
+        response.headers["Cache-Control"] = cache
+        response.headers["CDN-Cache-Control"] = cache
 
     return JobListResponse(
         items=[job_response(job) for job in jobs],
@@ -405,6 +412,7 @@ def recommended_jobs(
 @router.get("/jobs/{job_id}", response_model=JobResponse)
 def get_job(
     job_id: int,
+    response: Response,
     db: Session = Depends(get_db),
 ):
     job = db.get(Job, job_id)
@@ -415,6 +423,9 @@ def get_job(
             detail="Job not found.",
         )
 
+    cache = "public, s-maxage=60, stale-while-revalidate=300, stale-if-error=900"
+    response.headers["Cache-Control"] = cache
+    response.headers["CDN-Cache-Control"] = cache
     return job_response(job)
 
 
@@ -644,6 +655,7 @@ def categories_summary(
     response_model=IngestionStatusResponse,
 )
 def ingestion_status(
+    response: Response,
     db: Session = Depends(get_db),
 ):
     sources = (
@@ -685,6 +697,7 @@ def ingestion_status(
                     **IngestionSourceStatus.model_validate(
                         source
                     ).model_dump(),
+                    "base_url": source.base_url,
                     "latest_run_id": run.id if run else None,
                     "latest_run_status": (
                         run.status if run else None
@@ -716,6 +729,10 @@ def ingestion_status(
                 }
             )
         )
+
+    cache = "public, s-maxage=30, stale-while-revalidate=120, stale-if-error=600"
+    response.headers["Cache-Control"] = cache
+    response.headers["CDN-Cache-Control"] = cache
 
     return IngestionStatusResponse(
         sources=source_statuses,
