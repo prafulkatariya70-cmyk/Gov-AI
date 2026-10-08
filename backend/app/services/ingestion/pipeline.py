@@ -11,10 +11,7 @@ from app.services.eligibility.persistence import (
     save_parsed_eligibility,
 )
 from app.services.ingestion.base_adapter import JobSourceAdapter
-from app.services.ingestion.job_persistence import (
-    expire_past_deadline_jobs,
-    save_discovered_job,
-)
+from app.services.ingestion.job_persistence import save_discovered_job
 from app.services.ingestion.models import DiscoveredJob
 
 
@@ -160,10 +157,6 @@ def run_ingestion(
     """
 
     stats = IngestionStats()
-
-    # Keep the database lifecycle current even when an official source
-    # stops listing a notice after its application deadline.
-    expire_past_deadline_jobs(db)
 
     discovered_jobs = adapter.discover_jobs()
 
