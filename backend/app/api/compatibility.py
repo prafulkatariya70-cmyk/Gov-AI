@@ -3,6 +3,7 @@
 from datetime import date, datetime
 
 from fastapi import APIRouter, Depends, Header, HTTPException, Query, Response, status
+import jwt
 from pydantic import BaseModel, ConfigDict, Field
 from sqlalchemy import func, or_
 from sqlalchemy.orm import Session
@@ -17,6 +18,8 @@ from app.models.job_eligibility import JobEligibility
 from app.models.job_source import JobSource
 from app.models.user import User
 from app.models.user_profile import UserProfile
+from jwt import InvalidTokenError, PyJWKClient
+
 from app.services.job_lifecycle import (
     application_today,
     current_or_upcoming_filter,
@@ -34,11 +37,59 @@ def get_db():
         db.close()
 
 
+_jwks_client: PyJWKClient | None = None
+
+
 def get_development_user(
     db: Session = Depends(get_db),
     client_id: str | None = Header(default=None, alias="X-Client-ID"),
+    authorization: str | None = Header(default=None),
 ) -> User:
-    """Resolve a stable anonymous app identity until full authentication is added."""
+    """Resolve an authenticated Supabase user, with optional anonymous compatibility."""
+    global _jwks_client
+
+    if authorization:
+        scheme, _, token = authorization.partition(" ")
+        if scheme.lower() != "bearer" or not token:
+            raise HTTPException(status_code=401, detail="Invalid authorization header.")
+
+        if not settings.supabase_url:
+            raise HTTPException(status_code=503, detail="Supabase authentication is not configured.")
+
+        if _jwks_client is None:
+            _jwks_client = PyJWKClient(
+                settings.supabase_url.rstrip("/") + "/auth/v1/.well-known/jwks.json",
+                cache_jwk_set=True,
+                lifespan=600,
+                timeout=5,
+            )
+
+        try:
+            signing_key = _jwks_client.get_signing_key_from_jwt(token)
+            claims = jwt.decode(
+                token,
+                signing_key.key,
+                algorithms=["ES256", "RS256"],
+                issuer=settings.supabase_url.rstrip("/") + "/auth/v1",
+                audience="authenticated",
+                options={"require": ["sub", "exp"]},
+            )
+        except InvalidTokenError as exc:
+            raise HTTPException(status_code=401, detail="Invalid or expired authentication token.") from exc
+
+        subject = str(claims["sub"])
+        email = str(claims.get("email") or f"{subject}@supabase.local")[:255]
+        user = db.query(User).filter(User.email == email).one_or_none()
+        if user is None:
+            user = User(email=email, password_hash="supabase-auth")
+            db.add(user)
+            db.commit()
+            db.refresh(user)
+        return user
+
+    if not settings.compatibility_allow_anonymous:
+        raise HTTPException(status_code=401, detail="Authentication required.")
+
     if client_id:
         normalized = client_id.strip()
         if len(normalized) < 16 or len(normalized) > 128:
