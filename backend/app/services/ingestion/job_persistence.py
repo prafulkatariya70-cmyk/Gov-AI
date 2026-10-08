@@ -1,60 +1,8 @@
-from datetime import date
-
 from sqlalchemy.orm import Session
 
 from app.models.job import Job
 from app.services.ingestion.deduplicator import find_existing_job
 from app.services.ingestion.models import DiscoveredJob
-
-
-def job_status_for_application_end(
-    application_end: date | None,
-    today: date | None = None,
-) -> str:
-    """
-    Derive the lifecycle status from the application deadline.
-
-    Jobs without a known deadline remain active because expiry cannot
-    be determined safely. A deadline equal to today is still active.
-    """
-    if application_end is None:
-        return "active"
-
-    effective_today = today or date.today()
-
-    if application_end < effective_today:
-        return "expired"
-
-    return "active"
-
-
-def expire_past_deadline_jobs(
-    db: Session,
-    today: date | None = None,
-) -> int:
-    """
-    Mark active jobs whose application deadline has passed as expired.
-
-    Existing explicitly closed/other statuses are left untouched.
-    """
-    effective_today = today or date.today()
-
-    updated = (
-        db.query(Job)
-        .filter(
-            Job.status == "active",
-            Job.application_end.is_not(None),
-            Job.application_end < effective_today,
-        )
-        .update(
-            {"status": "expired"},
-            synchronize_session=False,
-        )
-    )
-
-    db.flush()
-
-    return updated
 
 
 def create_job(
@@ -73,9 +21,7 @@ def create_job(
         notification_url=discovered_job.notification_url,
         application_start=discovered_job.application_start,
         application_end=discovered_job.application_end,
-        status=job_status_for_application_end(
-            discovered_job.application_end,
-        ),
+        status="active",
         source_name=discovered_job.source_name,
         external_id=discovered_job.external_id,
         opportunity_type=discovered_job.opportunity_type,
@@ -98,16 +44,35 @@ def job_has_changes(
 
     return any(
         [
-            job.organization_name != discovered_job.organization_name,
-            job.title != discovered_job.title,
-            job.description != discovered_job.description,
-            job.official_url != discovered_job.official_url,
-            job.notification_url != discovered_job.notification_url,
-            job.application_start != discovered_job.application_start,
-            job.application_end != discovered_job.application_end,
-            job.source_name != discovered_job.source_name,
-            job.external_id != discovered_job.external_id,
-            job.opportunity_type != discovered_job.opportunity_type,
+            job.organization_name
+            != discovered_job.organization_name,
+
+            job.title
+            != discovered_job.title,
+
+            job.description
+            != discovered_job.description,
+
+            job.official_url
+            != discovered_job.official_url,
+
+            job.notification_url
+            != discovered_job.notification_url,
+
+            job.application_start
+            != discovered_job.application_start,
+
+            job.application_end
+            != discovered_job.application_end,
+
+            job.source_name
+            != discovered_job.source_name,
+
+            job.external_id
+            != discovered_job.external_id,
+
+            job.opportunity_type
+            != discovered_job.opportunity_type,
         ]
     )
 
@@ -131,13 +96,6 @@ def update_job(
     job.external_id = discovered_job.external_id
     job.opportunity_type = discovered_job.opportunity_type
 
-    # Do not overwrite an explicitly closed record. Otherwise derive
-    # active/expired from the latest official application deadline.
-    if job.status != "closed":
-        job.status = job_status_for_application_end(
-            discovered_job.application_end,
-        )
-
     return job
 
 
@@ -147,6 +105,14 @@ def save_discovered_job(
 ) -> tuple[Job, str]:
     """
     Create, update, or skip a discovered job.
+
+    Returns:
+        (job, action)
+
+    action values:
+        "created" -> new job
+        "updated" -> existing job changed
+        "skipped" -> existing job unchanged
     """
 
     existing_job = find_existing_job(
@@ -160,14 +126,6 @@ def save_discovered_job(
             existing_job,
             discovered_job,
         ):
-            # Keep lifecycle status current even when source content
-            # itself has not changed.
-            if existing_job.status != "closed":
-                existing_job.status = job_status_for_application_end(
-                    existing_job.application_end,
-                )
-                db.flush()
-
             return existing_job, "skipped"
 
         updated_job = update_job(
