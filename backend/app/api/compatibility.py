@@ -349,6 +349,7 @@ def profile_response(
 
 @router.get("/jobs", response_model=JobListResponse)
 def list_jobs(
+    response: Response,
     search: str | None = None,
     status_filter: str | None = Query(
         default=None,
@@ -359,7 +360,6 @@ def list_jobs(
     eligible_state: str | None = None,
     page: int = Query(default=1, ge=1),
     limit: int = Query(default=20, ge=1, le=100),
-    response: Response,
     db: Session = Depends(get_db),
 ):
     query = db.query(Job).filter(
