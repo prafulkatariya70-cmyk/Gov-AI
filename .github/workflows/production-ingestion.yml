@@ -20,9 +20,11 @@ jobs:
     env:
       DATABASE_USER: ${{ secrets.DATABASE_USER }}
       DATABASE_PASSWORD: ${{ secrets.DATABASE_PASSWORD }}
-      DATABASE_HOST: ${{ secrets.DATABASE_HOST }}
-      DATABASE_PORT: ${{ secrets.DATABASE_PORT }}
-      DATABASE_NAME: ${{ secrets.DATABASE_NAME }}
+      # The host is not a credential. Keep a project-specific fallback so a
+      # missing Actions secret cannot silently send PostgreSQL to localhost.
+      DATABASE_HOST: ${{ secrets.DATABASE_HOST || 'aws-0-ap-south-1.pooler.supabase.com' }}
+      DATABASE_PORT: ${{ secrets.DATABASE_PORT || '6543' }}
+      DATABASE_NAME: ${{ secrets.DATABASE_NAME || 'postgres' }}
       COMPATIBILITY_DEVELOPMENT_USER_EMAIL: ${{ secrets.COMPATIBILITY_DEVELOPMENT_USER_EMAIL }}
       PYTHONPATH: .
     steps:
@@ -33,6 +35,17 @@ jobs:
         uses: actions/setup-python@v5
         with:
           python-version: "3.12"
+
+      - name: Validate required database configuration
+        env:
+          REQUIRED_DATABASE_USER: ${{ secrets.DATABASE_USER }}
+          REQUIRED_DATABASE_PASSWORD: ${{ secrets.DATABASE_PASSWORD }}
+        run: |
+          test -n "$REQUIRED_DATABASE_USER" || { echo "::error::GitHub Actions secret DATABASE_USER is missing"; exit 1; }
+          test -n "$REQUIRED_DATABASE_PASSWORD" || { echo "::error::GitHub Actions secret DATABASE_PASSWORD is missing"; exit 1; }
+          test -n "$DATABASE_HOST" || { echo "::error::DATABASE_HOST is missing"; exit 1; }
+          test "$DATABASE_HOST" != "localhost" || { echo "::error::DATABASE_HOST resolved to localhost"; exit 1; }
+          echo "Database connection settings are present (credentials not displayed)."
 
       - name: Install Tesseract
         run: sudo apt-get update && sudo apt-get install -y tesseract-ocr
