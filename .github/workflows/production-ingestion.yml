@@ -18,10 +18,10 @@ jobs:
       run:
         working-directory: backend
     env:
-      DATABASE_USER: ${{ secrets.DATABASE_USER }}
+      # Supabase's transaction pooler requires the project-qualified username.
+      # Keep the password in GitHub Secrets; the username is not a credential.
+      DATABASE_USER: postgres.osvmbkautopmkysinqyf
       DATABASE_PASSWORD: ${{ secrets.DATABASE_PASSWORD }}
-      # The host is not a credential. Keep a project-specific fallback so a
-      # missing Actions secret cannot silently send PostgreSQL to localhost.
       DATABASE_HOST: ${{ secrets.DATABASE_HOST || 'aws-0-ap-south-1.pooler.supabase.com' }}
       DATABASE_PORT: ${{ secrets.DATABASE_PORT || '6543' }}
       DATABASE_NAME: ${{ secrets.DATABASE_NAME || 'postgres' }}
@@ -38,13 +38,12 @@ jobs:
 
       - name: Validate required database configuration
         env:
-          REQUIRED_DATABASE_USER: ${{ secrets.DATABASE_USER }}
           REQUIRED_DATABASE_PASSWORD: ${{ secrets.DATABASE_PASSWORD }}
         run: |
-          test -n "$REQUIRED_DATABASE_USER" || { echo "::error::GitHub Actions secret DATABASE_USER is missing"; exit 1; }
           test -n "$REQUIRED_DATABASE_PASSWORD" || { echo "::error::GitHub Actions secret DATABASE_PASSWORD is missing"; exit 1; }
           test -n "$DATABASE_HOST" || { echo "::error::DATABASE_HOST is missing"; exit 1; }
           test "$DATABASE_HOST" != "localhost" || { echo "::error::DATABASE_HOST resolved to localhost"; exit 1; }
+          test "$DATABASE_USER" = "postgres.osvmbkautopmkysinqyf" || { echo "::error::Unexpected Supabase pooler username format"; exit 1; }
           echo "Database connection settings are present (credentials not displayed)."
 
       - name: Install Tesseract
