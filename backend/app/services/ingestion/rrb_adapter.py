@@ -11,11 +11,11 @@ from app.services.ingestion.base_adapter import JobSourceAdapter
 from app.services.ingestion.models import DiscoveredJob
 
 
-RRB_BASE_URL = "https://rrbbbs.gov.in/"
+RRB_BASE_URL = "https://rrb.indianrailways.gov.in/"
 
-RRB_CEN_URL = (
-    "https://rrbbbs.gov.in/notifications.php"
-)
+# The unified official Railway Recruitment Boards portal replaced the old
+# regional Bhubaneswar site for current recruitment updates.
+RRB_CEN_URL = RRB_BASE_URL
 
 MAX_RETRIES = 3
 
@@ -212,6 +212,43 @@ class RRBAdapter(JobSourceAdapter):
             )
 
             seen_cens.add(cen_number)
+
+        # The unified portal may expose CEN notices as linked cards rather than
+        # table rows. Use official links as a fallback when no table rows matched.
+        if not discovered_jobs:
+            for link in soup.find_all("a", href=True):
+                link_text = link.get_text(" ", strip=True)
+                href = link.get("href", "")
+                combined_text = f"{link_text} {href}"
+                cen_number = self._extract_cen_number(combined_text)
+                if not cen_number or not self._is_recruitment_cen(combined_text):
+                    continue
+                if cen_number in seen_cens:
+                    continue
+
+                title = link_text or f"Railway Recruitment {cen_number}"
+                notification_url = urljoin(RRB_BASE_URL, href)
+                discovered_jobs.append(
+                    DiscoveredJob(
+                        organization_name="Railway Recruitment Boards",
+                        title=title,
+                        official_url=RRB_BASE_URL,
+                        notification_url=notification_url,
+                        description=f"{cen_number}: {title}",
+                        application_start=None,
+                        application_end=None,
+                        source_name=self.source_name,
+                        external_id=cen_number,
+                        opportunity_type="PUBLIC_RECRUITMENT",
+                    )
+                )
+                seen_cens.add(cen_number)
+
+        if not discovered_jobs:
+            raise RuntimeError(
+                "Unified official RRB portal returned no recognizable recruitment CENs; "
+                "the page structure may have changed."
+            )
 
         return discovered_jobs
 
