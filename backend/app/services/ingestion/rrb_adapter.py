@@ -1,7 +1,7 @@
 from __future__ import annotations
 
 import re
-from datetime import datetime
+import time
 from urllib.parse import urljoin
 
 import httpx
@@ -18,6 +18,7 @@ RRB_BASE_URL = "https://rrb.indianrailways.gov.in/"
 RRB_CEN_URL = RRB_BASE_URL
 
 MAX_RETRIES = 3
+RETRY_BACKOFF_SECONDS = 2
 
 
 class RRBAdapter(JobSourceAdapter):
@@ -93,8 +94,7 @@ class RRBAdapter(JobSourceAdapter):
                 return response.text
 
             except (
-                httpx.ConnectTimeout,
-                httpx.ReadTimeout,
+                httpx.TimeoutException,
                 httpx.ConnectError,
                 httpx.RemoteProtocolError,
             ) as exc:
@@ -102,6 +102,19 @@ class RRBAdapter(JobSourceAdapter):
                 last_error = exc
 
                 if attempt < MAX_RETRIES:
+                    time.sleep(RETRY_BACKOFF_SECONDS * attempt)
+                    continue
+
+            except httpx.HTTPStatusError as exc:
+                # Retry transient upstream failures, but fail immediately for
+                # permanent responses such as 403 or 404.
+                if exc.response.status_code not in {408, 425, 429, 500, 502, 503, 504}:
+                    raise
+
+                last_error = exc
+
+                if attempt < MAX_RETRIES:
+                    time.sleep(RETRY_BACKOFF_SECONDS * attempt)
                     continue
 
         raise RuntimeError(
