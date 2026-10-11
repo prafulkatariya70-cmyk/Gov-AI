@@ -1,4 +1,5 @@
 from datetime import date
+from types import SimpleNamespace
 
 from app.services.ingestion.kpsc_adapter import KPSCAdapter
 
@@ -22,15 +23,22 @@ def test_kpsc_extract_notification_links_filters_non_recruitment():
         <a href="./pdf/RESULT_2026.pdf">
           Result Notification
         </a>
+        <a href="./pdf/ASSISTANT_CONTROLLER_NOTICE.pdf?download=1">
+          Assistant Controller Recruitment Notice
+        </a>
+        <a href="https://example.com/foreign.pdf">
+          Recruitment Notification 2026
+        </a>
       </body>
     </html>
     """
 
     links = KPSCAdapter()._extract_notification_links(html)
 
-    assert len(links) == 2
+    assert len(links) == 3
     assert links[0][0].endswith("/pdf/GP_2026.pdf")
     assert links[1][0].endswith("/pdf/SAAD_RPC_2026.pdf")
+    assert links[2][0].endswith("/pdf/ASSISTANT_CONTROLLER_NOTICE.pdf?download=1")
 
 
 def test_kpsc_extract_application_window():
@@ -105,3 +113,37 @@ def test_kpsc_fetch_notification_page_streams_response(monkeypatch):
     assert calls["kwargs"]["timeout"] == (15.0, 20.0)
     assert calls["chunk_size"] == 16384
     assert calls["closed"] is True
+
+
+
+def test_kpsc_does_not_emit_expired_notice(monkeypatch):
+    class FakeFetcher:
+        def fetch(self, url):
+            return SimpleNamespace(success=True, content=b"pdf")
+
+    class FakeExtractor:
+        def extract(self, content):
+            return SimpleNamespace(
+                success=True,
+                text=(
+                    "Recruitment for Assistant Controller\n"
+                    "Online applications are invited from "
+                    "01-01-2020 to 31-01-2020."
+                ),
+            )
+
+    monkeypatch.setattr(
+        "app.services.ingestion.kpsc_adapter.DocumentFetcher",
+        FakeFetcher,
+    )
+    monkeypatch.setattr(
+        "app.services.ingestion.kpsc_adapter.PDFTextExtractor",
+        FakeExtractor,
+    )
+
+    job = KPSCAdapter()._parse_notification(
+        notification_url="https://kpsc.kar.nic.in/pdf/notice.pdf",
+        anchor_text="Assistant Controller Recruitment Notice",
+    )
+
+    assert job is None
