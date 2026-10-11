@@ -62,6 +62,7 @@ def ensure_configured_sources(
     """
 
     created = 0
+    updated = 0
 
     for config in SOURCE_CONFIGS.values():
         existing = (
@@ -71,6 +72,11 @@ def ensure_configured_sources(
         )
 
         if existing is not None:
+            # Keep stored source metadata aligned with configuration changes,
+            # such as migrating RRB from an obsolete regional URL.
+            if existing.base_url != config.base_url:
+                existing.base_url = config.base_url
+                updated += 1
             continue
 
         db.add(
@@ -87,7 +93,7 @@ def ensure_configured_sources(
 
         created += 1
 
-    if created:
+    if created or updated:
         db.commit()
 
     return created
