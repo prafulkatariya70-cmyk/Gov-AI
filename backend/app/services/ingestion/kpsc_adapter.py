@@ -2,7 +2,7 @@ from __future__ import annotations
 
 import re
 from datetime import date, datetime
-from urllib.parse import urljoin
+from urllib.parse import urljoin, urlsplit
 
 import requests
 from bs4 import BeautifulSoup
@@ -186,9 +186,6 @@ class KPSCAdapter(JobSourceAdapter):
 
             normalized = f"{text} {href}".lower()
 
-            if "2026" not in normalized:
-                continue
-
             if any(signal in normalized for signal in EXCLUDED_SIGNALS):
                 continue
 
@@ -203,13 +200,25 @@ class KPSCAdapter(JobSourceAdapter):
                 href,
             )
 
-            if not absolute_url.lower().endswith(".pdf"):
+            parsed_url = urlsplit(absolute_url)
+            if not parsed_url.path.lower().endswith(".pdf"):
+                continue
+            if parsed_url.scheme not in ("http", "https"):
+                continue
+            if parsed_url.netloc.lower() not in {
+                "kpsc.kar.nic.in",
+                "www.kpsc.kar.nic.in",
+            }:
                 continue
 
-            if absolute_url in seen_urls:
+            dedupe_url = parsed_url._replace(
+                query="",
+                fragment="",
+            ).geturl()
+            if dedupe_url in seen_urls:
                 continue
 
-            seen_urls.add(absolute_url)
+            seen_urls.add(dedupe_url)
             candidates.append((absolute_url, text))
 
             if len(candidates) >= MAX_NOTIFICATION_LINKS:
@@ -243,7 +252,9 @@ class KPSCAdapter(JobSourceAdapter):
             self._extract_application_window(text)
         )
 
-        if application_start is None and application_end is None:
+        # Require a verifiable closing date so expired archive notices
+        # are not reintroduced into the active jobs feed.
+        if application_end is None or application_end < date.today():
             return None
 
         notification_number = self._extract_notification_number(text)
@@ -463,7 +474,7 @@ class KPSCAdapter(JobSourceAdapter):
 
     @staticmethod
     def _build_url_id(url: str) -> str:
-        filename = url.rstrip("/").rsplit("/", 1)[-1]
+        filename = urlsplit(url).path.rstrip("/").rsplit("/", 1)[-1]
         filename = re.sub(
             r"\.pdf$",
             "",
