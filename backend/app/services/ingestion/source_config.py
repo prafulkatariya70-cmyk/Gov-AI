@@ -30,7 +30,7 @@ SOURCE_CONFIGS = {
 
     "RRB": SourceConfig(
         name="RRB",
-        base_url="https://www.rrb.gov.in/",
+        base_url="https://rrb.indianrailways.gov.in/",
         source_type="government",
         check_interval_minutes=30,
     ),
