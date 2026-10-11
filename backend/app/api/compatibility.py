@@ -518,11 +518,26 @@ def get_job(
 ):
     job = db.get(Job, job_id)
 
-    if job is None:
+    if job is None or not current_or_upcoming_filter(application_today()):
         raise HTTPException(
             status_code=404,
             detail="Job not found.",
         )
+
+    # Detail pages must follow the same lifecycle rules as the public feed;
+    # otherwise stale links could still present expired or closed openings.
+    lifecycle_filters = current_or_upcoming_filter(application_today())
+    visible_job = (
+        db.query(Job)
+        .filter(Job.id == job_id, *lifecycle_filters)
+        .one_or_none()
+    )
+    if visible_job is None:
+        raise HTTPException(
+            status_code=404,
+            detail="This opening is no longer active.",
+        )
+    job = visible_job
 
     cache = "public, s-maxage=60, stale-while-revalidate=300, stale-if-error=900"
     response.headers["Cache-Control"] = cache
