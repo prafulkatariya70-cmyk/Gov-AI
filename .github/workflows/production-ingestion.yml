@@ -20,7 +20,7 @@ jobs:
     env:
       # Supabase's transaction pooler requires the project-qualified username.
       # Keep the password in GitHub Secrets; the username is not a credential.
-      DATABASE_USER: ${{ secrets.DATABASE_USER || 'postgres.osvmbkautopmkysinqyf' }}
+      DATABASE_USER: postgres.osvmbkautopmkysinqyf
       DATABASE_PASSWORD: ${{ secrets.DATABASE_PASSWORD }}
       DATABASE_HOST: ${{ secrets.DATABASE_HOST || 'aws-0-ap-south-1.pooler.supabase.com' }}
       DATABASE_PORT: ${{ secrets.DATABASE_PORT || '6543' }}
