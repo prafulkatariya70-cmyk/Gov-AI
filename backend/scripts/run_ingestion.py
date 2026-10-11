@@ -11,12 +11,19 @@ def main() -> None:
         print(f"Sources processed: {len(results)}")
         failed = 0
         for result in results:
+            source_name = (
+                result.source.name
+                if result.source is not None
+                else f"source_id={result.source_id}"
+            )
             print(
-                f"Run {result.id} | Source {result.source_id} | "
+                f"Run {result.id} | Source {source_name} ({result.source_id}) | "
                 f"Status: {result.status} | Discovered: {result.discovered} | "
                 f"Created: {result.created} | Updated: {result.updated} | "
                 f"Skipped: {result.skipped} | Failed: {result.failed}"
             )
+            if result.error_message:
+                print(f"Source error [{source_name}]: {result.error_message}")
             if result.status in {"failed", "completed_with_errors"}:
                 failed += 1
         if failed:
