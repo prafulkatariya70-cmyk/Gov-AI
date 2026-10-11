@@ -28,19 +28,13 @@ class IngestionStats:
 
 
 def validate_job(job: DiscoveredJob) -> bool:
-    """
-    Validate the minimum information required to store a job.
-    """
-
+    """Validate the minimum information required to store a job."""
     if not job.organization_name:
         return False
-
     if not job.title:
         return False
-
     if not job.official_url:
         return False
-
     return True
 
 
@@ -51,99 +45,63 @@ def _parse_and_save_eligibility(
     """
     Fetch, extract, parse, and persist notification eligibility.
 
-    Returns:
-        "created"
-        "updated"
-        "unchanged"
-        "failed"
-        "unavailable"
+    Returns one of: created, updated, unchanged, failed, unavailable.
     """
-
-    notification_url = getattr(
-        job,
-        "notification_url",
-        None,
-    )
-
+    notification_url = getattr(job, "notification_url", None)
     if not notification_url:
         return "unavailable"
 
+    stage = "fetch"
     try:
-        # ------------------------------------------------------------
-        # Fetch notification
-        # ------------------------------------------------------------
-
-        fetcher = DocumentFetcher()
-
-        fetched_document = fetcher.fetch(
-            notification_url,
-        )
-
+        fetched_document = DocumentFetcher().fetch(notification_url)
         if not fetched_document or not fetched_document.success:
+            print(
+                "Eligibility processing failed at fetch: "
+                f"url={notification_url!r}; document fetch unsuccessful"
+            )
             return "failed"
-
         if not fetched_document.content:
+            print(
+                "Eligibility processing failed at fetch: "
+                f"url={notification_url!r}; response had no content"
+            )
             return "failed"
 
-        # ------------------------------------------------------------
-        # Extract PDF text
-        # ------------------------------------------------------------
-
-        extractor = PDFTextExtractor()
-
-        extracted_document = extractor.extract(
+        stage = "extract"
+        extracted_document = PDFTextExtractor().extract(
             fetched_document.content,
         )
-
         if not extracted_document:
+            print(
+                "Eligibility processing failed at extract: "
+                f"url={notification_url!r}; extractor returned no result"
+            )
             return "failed"
 
-        text = getattr(
-            extracted_document,
-            "text",
-            None,
-        )
-
+        text = getattr(extracted_document, "text", None)
         if not text:
+            print(
+                "Eligibility processing failed at extract: "
+                f"url={notification_url!r}; extracted text was empty"
+            )
             return "failed"
 
-        # ------------------------------------------------------------
-        # Parse notification
-        # ------------------------------------------------------------
+        stage = "parse"
+        parsed_notification = NotificationParser().parse(text)
 
-        parser = NotificationParser()
-
-        parsed_notification = parser.parse(
-            text,
-        )
-
-        # ------------------------------------------------------------
-        # Check whether an eligibility record already exists
-        # ------------------------------------------------------------
-
+        stage = "persist"
         existing_eligibility = job.eligibility
-
-        # ------------------------------------------------------------
-        # Persist parsed eligibility
-        # ------------------------------------------------------------
-
-        save_parsed_eligibility(
-            db,
-            job,
-            parsed_notification,
-        )
+        save_parsed_eligibility(db, job, parsed_notification)
 
         if existing_eligibility is None:
             return "created"
-
         return "updated"
 
     except Exception as exc:
         print(
             "Eligibility processing error: "
-            f"{exc}"
+            f"stage={stage}; url={notification_url!r}; error={exc!r}"
         )
-
         return "failed"
 
 
@@ -151,70 +109,41 @@ def run_ingestion(
     db: Session,
     adapter: JobSourceAdapter,
 ) -> IngestionStats:
-    """
-    Run discovery, validation, deduplication,
-    job persistence, and eligibility processing.
-    """
-
+    """Run discovery, validation, deduplication, and eligibility processing."""
     stats = IngestionStats()
-
     discovered_jobs = adapter.discover_jobs()
-
     stats.discovered = len(discovered_jobs)
 
     for discovered_job in discovered_jobs:
-
         if not validate_job(discovered_job):
             stats.skipped += 1
             continue
 
         try:
-            saved_job, action = save_discovered_job(
-                db,
-                discovered_job,
-            )
-
-            # --------------------------------------------------------
-            # Job persistence statistics
-            # --------------------------------------------------------
+            saved_job, action = save_discovered_job(db, discovered_job)
 
             if action == "created":
                 stats.created += 1
-
             elif action == "updated":
                 stats.updated += 1
-
             elif action == "skipped":
                 stats.skipped += 1
-
-            # --------------------------------------------------------
-            # Eligibility processing
-            # --------------------------------------------------------
 
             eligibility_action = _parse_and_save_eligibility(
                 db,
                 saved_job,
             )
-
             if eligibility_action == "created":
                 stats.eligibility_created += 1
-
             elif eligibility_action == "updated":
                 stats.eligibility_updated += 1
-
             elif eligibility_action == "failed":
                 stats.eligibility_failed += 1
 
         except Exception as exc:
             db.rollback()
-
             stats.failed += 1
-
-            print(
-                "Ingestion error: "
-                f"{exc}"
-            )
+            print(f"Ingestion error: {exc}")
 
     db.commit()
-
     return stats
