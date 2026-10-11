@@ -261,7 +261,7 @@ def test_jobs_profile_categories_and_ingestion_status(client):
 
 
 def test_recommendations_eligibility_and_application_lifecycle(client):
-    test_client, job_id = client
+    test_client, job_id, expired_job_id, closed_job_id = client
 
     eligibility = test_client.get(
         f"/api/jobs/{job_id}/eligibility"
