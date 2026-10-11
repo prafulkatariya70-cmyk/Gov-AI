@@ -160,7 +160,7 @@ def client(monkeypatch):
     app.dependency_overrides[get_db] = override_db
 
     with TestClient(app) as test_client:
-        yield test_client, job.id
+        yield test_client, job.id, expired.id, closed.id
 
     app.dependency_overrides.clear()
     session.close()
@@ -168,7 +168,7 @@ def client(monkeypatch):
 
 
 def test_jobs_profile_categories_and_ingestion_status(client):
-    test_client, job_id = client
+    test_client, job_id, expired_job_id, closed_job_id = client
 
     jobs = test_client.get(
         "/api/jobs",
@@ -204,6 +204,12 @@ def test_jobs_profile_categories_and_ingestion_status(client):
         detail.json()["organization_name"]
         == "Staff Selection Commission"
     )
+
+    # A stale/deep link must not resurrect an expired or closed listing.
+    expired_detail = test_client.get(f"/api/jobs/{expired_job_id}")
+    closed_detail = test_client.get(f"/api/jobs/{closed_job_id}")
+    assert expired_detail.status_code == 404
+    assert closed_detail.status_code == 404
 
     profile = test_client.get("/api/profile")
 
