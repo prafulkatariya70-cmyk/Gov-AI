@@ -20,7 +20,7 @@ jobs:
     env:
       # Supabase's transaction pooler requires the project-qualified username.
       # Keep the password in GitHub Secrets; the username is not a credential.
-      DATABASE_USER: postgres.osvmbkautopmkysinqyf
+      DATABASE_USER: ${{ secrets.DATABASE_USER || 'postgres.osvmbkautopmkysinqyf' }}
       DATABASE_PASSWORD: ${{ secrets.DATABASE_PASSWORD }}
       DATABASE_HOST: ${{ secrets.DATABASE_HOST || 'aws-0-ap-south-1.pooler.supabase.com' }}
       DATABASE_PORT: ${{ secrets.DATABASE_PORT || '6543' }}
@@ -43,7 +43,7 @@ jobs:
           test -n "$REQUIRED_DATABASE_PASSWORD" || { echo "::error::GitHub Actions secret DATABASE_PASSWORD is missing"; exit 1; }
           test -n "$DATABASE_HOST" || { echo "::error::DATABASE_HOST is missing"; exit 1; }
           test "$DATABASE_HOST" != "localhost" || { echo "::error::DATABASE_HOST resolved to localhost"; exit 1; }
-          test "$DATABASE_USER" = "postgres.osvmbkautopmkysinqyf" || { echo "::error::Unexpected Supabase pooler username format"; exit 1; }
+          test "$DATABASE_USER" = "postgres.osvmbkautopmkysinqyf" || { echo "::error::DATABASE_USER must match the Supabase project-qualified pooler user shown in Connect settings"; exit 1; }
           echo "Database connection settings are present (credentials not displayed)."
 
       - name: Install Tesseract
