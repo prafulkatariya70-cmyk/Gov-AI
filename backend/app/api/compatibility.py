@@ -518,7 +518,7 @@ def get_job(
 ):
     job = db.get(Job, job_id)
 
-    if job is None or not current_or_upcoming_filter(application_today()):
+    if job is None:
         raise HTTPException(
             status_code=404,
             detail="Job not found.",
