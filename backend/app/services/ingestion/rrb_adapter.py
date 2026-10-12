@@ -12,10 +12,10 @@ from app.services.ingestion.models import DiscoveredJob
 
 
 RRB_BASE_URL = "https://rrb.indianrailways.gov.in/"
-
-# The unified official Railway Recruitment Boards portal replaced the old
-# regional Bhubaneswar site for current recruitment updates.
-RRB_CEN_URL = RRB_BASE_URL
+# The unified portal publishes regional RRB pages under region-specific paths.
+# Use the official Bhubaneswar page rather than the root landing page, which
+# has repeatedly timed out in production ingestion.
+RRB_CEN_URL = urljoin(RRB_BASE_URL, "bhubaneswar")
 
 MAX_RETRIES = 3
 RETRY_BACKOFF_SECONDS = 2
@@ -65,7 +65,7 @@ class RRBAdapter(JobSourceAdapter):
                 "text/html,application/xhtml+xml,"
                 "application/xml;q=0.9,*/*;q=0.8"
             ),
-            "Referer": RRB_BASE_URL,
+            "Referer": RRB_CEN_URL,
         }
 
         timeout = httpx.Timeout(
@@ -211,7 +211,7 @@ class RRBAdapter(JobSourceAdapter):
                         "Railway Recruitment Boards"
                     ),
                     title=title,
-                    official_url=RRB_BASE_URL,
+                    official_url=RRB_CEN_URL,
                     notification_url=notification_url,
                     description=description,
                     application_start=None,
